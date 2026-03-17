@@ -13,7 +13,8 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "@compliancecore/ui": "workspace:*",
-    "@compliancecore/shared": "workspace:*"
+    "@compliancecore/shared": "workspace:*",
+    "better-auth": "^1.2.0"
   },
   "devDependencies": {
     "typescript": "^5.7.0",
