@@ -1,0 +1,40 @@
+{
+  "expo": {
+    "name": "ObraMaster",
+    "slug": "obra-mobile",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "obramaster",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.orbitmind.obramaster",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Necessário para fotografar notas fiscais e registrar evidências da obra",
+        "NSLocationWhenInUseUsageDescription": "Necessário para geolocalizar fotos de evidência da obra"
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#F59E0B"
+      },
+      "package": "com.orbitmind.obramaster",
+      "permissions": ["CAMERA", "ACCESS_FINE_LOCATION"]
+    },
+    "plugins": [
+      "expo-router",
+      "expo-camera",
+      "expo-location",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#F59E0B"
+        }
+      ]
+    ]
+  }
+}
