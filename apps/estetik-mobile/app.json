@@ -1,0 +1,38 @@
+{
+  "expo": {
+    "name": "EstetikComply",
+    "slug": "estetik-comply",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "estetikcomply",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "plugins": [
+      "expo-router",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Permitir acesso à câmera para fotografar documentos"
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png"
+        }
+      ]
+    ],
+    "ios": {
+      "bundleIdentifier": "com.compliancecore.estetik",
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "com.compliancecore.estetik",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#2563EB"
+      }
+    }
+  }
+}
