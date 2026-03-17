@@ -1,19 +1,21 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
-interface ClinicState {
-  selectedClinicId: string | null;
-  setSelectedClinic: (id: string | null) => void;
+interface ClinicStore {
+  selectedClinicId: string;
   sidebarOpen: boolean;
+  setSelectedClinicId: (id: string) => void;
   toggleSidebar: () => void;
-  darkMode: boolean;
-  toggleDarkMode: () => void;
 }
 
-export const useClinicStore = create<ClinicState>((set) => ({
-  selectedClinicId: null,
-  setSelectedClinic: (id) => set({ selectedClinicId: id }),
-  sidebarOpen: true,
-  toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
-  darkMode: false,
-  toggleDarkMode: () => set((s) => ({ darkMode: !s.darkMode })),
-}));
+export const useClinicStore = create<ClinicStore>()(
+  persist(
+    (set) => ({
+      selectedClinicId: '',
+      sidebarOpen: true,
+      setSelectedClinicId: (id) => set({ selectedClinicId: id }),
+      toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
+    }),
+    { name: 'clinic-store' },
+  ),
+);

@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { api } from '@/lib/api';
+import { ComplianceBadge } from '@compliancecore/ui';
 import type { ComplianceLevel } from '@compliancecore/shared';
 
 interface Clinica {
@@ -17,34 +18,14 @@ interface ClinicaWithScore extends Clinica {
   level?: ComplianceLevel;
 }
 
-const LEVEL_COLORS: Record<ComplianceLevel, string> = {
-  CRITICO: 'bg-red-100 text-red-800',
-  ATENCAO: 'bg-amber-100 text-amber-800',
-  BOM: 'bg-blue-100 text-blue-800',
-  EXCELENTE: 'bg-green-100 text-green-800',
-};
-
-const LEVEL_LABELS: Record<ComplianceLevel, string> = {
-  CRITICO: 'Critico',
-  ATENCAO: 'Atencao',
-  BOM: 'Bom',
-  EXCELENTE: 'Excelente',
-};
-
-function ComplianceBadge({
-  level,
-  score,
-}: {
-  level: ComplianceLevel;
-  score: number;
-}) {
-  return (
-    <span
-      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${LEVEL_COLORS[level]}`}
-    >
-      {score}% - {LEVEL_LABELS[level]}
-    </span>
-  );
+function levelToStatus(level: string): 'CONFORME' | 'NAO_CONFORME' | 'PARCIAL' | 'NAO_APLICAVEL' {
+  switch (level) {
+    case 'EXCELENTE':
+    case 'BOM': return 'CONFORME';
+    case 'ATENCAO': return 'PARCIAL';
+    case 'CRITICO': return 'NAO_CONFORME';
+    default: return 'NAO_APLICAVEL';
+  }
 }
 
 async function getClinicas(): Promise<{
@@ -179,10 +160,10 @@ export default async function ClinicasPage() {
                     <p className="text-sm text-gray-700">{clinica.cnpj}</p>
                   </td>
                   <td className="px-6 py-4">
-                    {clinica.level && clinica.score !== undefined ? (
+                    {clinica.level ? (
                       <ComplianceBadge
-                        level={clinica.level}
-                        score={clinica.score}
+                        status={levelToStatus(clinica.level)}
+                        size="sm"
                       />
                     ) : (
                       <span className="text-xs text-gray-400">

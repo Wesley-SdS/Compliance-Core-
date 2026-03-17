@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useQuery } from '@tanstack/react-query';
+import { api } from '@/lib/api';
 import { useClinicas, useClinicaScore, useClinicaTimeline } from '@/hooks/use-clinicas';
 import { useAlertas } from '@/hooks/use-alertas';
 import { ScoreGauge } from '@compliancecore/ui/ScoreGauge';
@@ -35,21 +37,25 @@ import {
   ReferenceLine,
 } from 'recharts';
 
-const MOCK_SCORE_HISTORY = [
-  { month: 'Out', score: 58 },
-  { month: 'Nov', score: 62 },
-  { month: 'Dez', score: 65 },
-  { month: 'Jan', score: 68 },
-  { month: 'Fev', score: 72 },
-  { month: 'Mar', score: 75 },
-];
+function ScoreHistoryChart({ data }: { data: any[] }) {
+  const chartData = (data || []).map((s: any) => ({
+    date: new Date(s.calculatedAt).toLocaleDateString('pt-BR', { month: 'short' }),
+    score: s.overall,
+  }));
 
-function ScoreHistoryChart() {
+  if (chartData.length === 0) {
+    return (
+      <div className="flex h-[240px] items-center justify-center">
+        <p className="text-sm text-gray-400">Nenhum historico de score disponivel.</p>
+      </div>
+    );
+  }
+
   return (
     <ResponsiveContainer width="100%" height={240}>
-      <LineChart data={MOCK_SCORE_HISTORY} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+      <LineChart data={chartData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
         <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" />
-        <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#6B7280' }} />
+        <XAxis dataKey="date" tick={{ fontSize: 12, fill: '#6B7280' }} />
         <YAxis domain={[0, 100]} tick={{ fontSize: 12, fill: '#6B7280' }} />
         <Tooltip
           contentStyle={{
@@ -133,6 +139,11 @@ export default function DashboardPage() {
 
   const { data: score, isLoading: loadingScore } = useClinicaScore(selectedClinicId);
   const { data: timeline, isLoading: loadingTimeline } = useClinicaTimeline(selectedClinicId);
+  const { data: scoreHistory } = useQuery({
+    queryKey: ['score-history', selectedClinicId],
+    queryFn: () => api(`/clinicas/${selectedClinicId}/score/history?months=6`),
+    enabled: !!selectedClinicId,
+  });
 
   const isLoading = loadingClinicas || loadingAlertas;
 
@@ -259,7 +270,7 @@ export default function DashboardPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ScoreHistoryChart />
+            <ScoreHistoryChart data={(scoreHistory as any)?.scores || []} />
           </CardContent>
         </Card>
 

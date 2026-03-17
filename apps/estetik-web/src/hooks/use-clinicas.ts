@@ -97,3 +97,12 @@ export function useGenerateDossier(clinicId: string) {
       }),
   });
 }
+
+export function useClinicaScoreHistory(id: string, months: number = 6) {
+  return useQuery({
+    queryKey: ['score-history', id, months],
+    queryFn: () => api(`/clinicas/${id}/score/history?months=${months}`),
+    enabled: !!id,
+    staleTime: 5 * 60 * 1000,
+  });
+}

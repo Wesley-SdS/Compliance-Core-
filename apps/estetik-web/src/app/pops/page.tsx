@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useGeneratePop, usePops, useApprovePop } from '@/hooks/use-pops';
 import { useClinicas } from '@/hooks/use-clinicas';
+import { useToast } from '@/components/ui/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -85,75 +86,22 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.
   },
 };
 
-const MOCK_POP_CONTENT = `# Procedimento Operacional Padrao
-
-## 1. Objetivo
-Estabelecer o procedimento padrao para a realizacao do procedimento de forma segura e eficaz, garantindo a conformidade com as normas da Anvisa e da Vigilancia Sanitaria.
-
-## 2. Materiais Necessarios
-- Luvas de procedimento estereis
-- Gaze esteril
-- Antisseptico (clorexidina 2%)
-- Material especifico do procedimento
-- Equipamento de protecao individual (EPI)
-- Formulario de consentimento informado
-
-## 3. Contraindicacoes
-- Gestantes e lactantes
-- Pacientes com infeccao ativa na area de tratamento
-- Alergia conhecida aos componentes utilizados
-- Pacientes com disturbios de coagulacao nao controlados
-- Doencas autoimunes em atividade
-
-## 4. Procedimento
-1. Verificar o consentimento informado assinado
-2. Realizar anamnese completa
-3. Higienizar as maos conforme protocolo
-4. Preparar o material em ambiente esteril
-5. Realizar a antissepsia da area de tratamento
-6. Executar o procedimento conforme tecnica padrao
-7. Aplicar curativos quando necessario
-8. Orientar o paciente sobre cuidados pos-procedimento
-
-## 5. Cuidados Pos-Procedimento
-- Evitar exposicao solar por 48 horas
-- Aplicar compressas frias se necessario
-- Nao manipular a area tratada
-- Retorno em 15 dias para avaliacao
-
-## 6. Descarte de Materiais
-- Descartar perfurocortantes em caixa apropriada
-- Materiais contaminados em saco branco leitoso
-- Seguir o PGRSS da clinica
-
-## 7. Registros
-- Registrar o procedimento no prontuario eletronico
-- Fotografar antes e apos (com consentimento)
-- Registrar lote e validade dos insumos utilizados
-`;
-
 function TypingEffect({ text }: { text: string }) {
-  const [displayedText, setDisplayedText] = useState('');
+  const [displayed, setDisplayed] = useState('');
 
-  useState(() => {
-    let index = 0;
+  useEffect(() => {
+    if (!text) return;
+    setDisplayed('');
+    let i = 0;
     const interval = setInterval(() => {
-      if (index < text.length) {
-        setDisplayedText(text.slice(0, index + 1));
-        index++;
-      } else {
-        clearInterval(interval);
-      }
-    }, 8);
+      i++;
+      setDisplayed(text.slice(0, i));
+      if (i >= text.length) clearInterval(interval);
+    }, 15);
     return () => clearInterval(interval);
-  });
+  }, [text]);
 
-  return (
-    <div className="prose prose-sm max-w-none whitespace-pre-wrap font-mono text-sm text-gray-700">
-      {displayedText}
-      <span className="animate-pulse">|</span>
-    </div>
-  );
+  return <div className="whitespace-pre-wrap font-mono text-sm">{displayed}</div>;
 }
 
 function PopGenerationSkeleton() {
@@ -212,23 +160,27 @@ export default function PopsPage() {
   const [editContent, setEditContent] = useState('');
   const [viewingPop, setViewingPop] = useState<Pop | null>(null);
 
+  const { toast } = useToast();
   const pops: Pop[] = (popsData as Pop[]) ?? [];
 
-  function handleGenerate() {
+  async function handleGenerate() {
     if (!selectedProcedimento) return;
     setIsGenerating(true);
     setGeneratedContent('');
 
-    // Simulate AI generation
-    setTimeout(() => {
-      const content = MOCK_POP_CONTENT.replace(
-        'procedimento',
-        selectedProcedimento.toLowerCase()
-      );
+    try {
+      const result = await generatePop.mutateAsync({
+        procedimentoTipo: selectedProcedimento,
+        clinicaId: selectedClinicaId || clinicas?.data?.[0]?.id || '',
+      });
+      const content = result.conteudo || result.content || '';
       setGeneratedContent(content);
       setEditContent(content);
+    } catch (error: any) {
+      toast({ title: 'Erro ao gerar POP', description: error.message, variant: 'destructive' });
+    } finally {
       setIsGenerating(false);
-    }, 3500);
+    }
   }
 
   function handleSaveAsDocument() {
@@ -276,7 +228,7 @@ export default function PopsPage() {
         <Card>
           <CardContent className="p-6">
             <div className="prose prose-sm max-w-none whitespace-pre-wrap text-gray-700">
-              {viewingPop.conteudo || MOCK_POP_CONTENT}
+              {viewingPop.conteudo || 'Conteudo nao disponivel.'}
             </div>
           </CardContent>
         </Card>

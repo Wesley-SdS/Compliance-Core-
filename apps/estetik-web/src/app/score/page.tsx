@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { api } from '@/lib/api';
 import { useClinicas, useClinicaScore, useClinicaDocuments, useCalculateScore } from '@/hooks/use-clinicas';
 import { ScoreGauge } from '@compliancecore/ui/ScoreGauge';
 import { DossierPreview } from '@compliancecore/ui/DossierPreview';
@@ -67,15 +69,6 @@ const CRITERION_LABELS: Record<string, string> = {
   LGPD_COMPLIANCE: 'LGPD Compliance',
   CONTROLE_RESIDUOS: 'Controle de Residuos',
 };
-
-const MOCK_SCORE_HISTORY = [
-  { month: 'Out', score: 58 },
-  { month: 'Nov', score: 62 },
-  { month: 'Dez', score: 65 },
-  { month: 'Jan', score: 68 },
-  { month: 'Fev', score: 72 },
-  { month: 'Mar', score: 75 },
-];
 
 function getBarColor(score: number): string {
   if (score >= 80) return 'bg-green-500';
@@ -206,6 +199,16 @@ export default function ScorePage() {
   const { data: score, isLoading: loadingScore } = useClinicaScore(clinicaId);
   const { data: documents } = useClinicaDocuments(clinicaId);
   const calculateScore = useCalculateScore(clinicaId ?? '');
+  const { data: scoreHistory } = useQuery({
+    queryKey: ['score-history', clinicaId],
+    queryFn: () => api(`/clinicas/${clinicaId}/score/history?months=6`),
+    enabled: !!clinicaId,
+  });
+
+  const scoreHistoryData = ((scoreHistory as any)?.scores || []).map((s: any) => ({
+    month: new Date(s.calculatedAt).toLocaleDateString('pt-BR', { month: 'short' }),
+    score: s.overall,
+  }));
 
   if (loadingClinicas) {
     return <ScoreSkeleton />;
@@ -413,8 +416,13 @@ export default function ScorePage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
+              {scoreHistoryData.length === 0 ? (
+                <div className="flex h-[280px] items-center justify-center">
+                  <p className="text-sm text-gray-400">Nenhum historico de score disponivel.</p>
+                </div>
+              ) : (
               <ResponsiveContainer width="100%" height={280}>
-                <AreaChart data={MOCK_SCORE_HISTORY} margin={{ top: 10, right: 20, left: 0, bottom: 5 }}>
+                <AreaChart data={scoreHistoryData} margin={{ top: 10, right: 20, left: 0, bottom: 5 }}>
                   <defs>
                     <linearGradient id="scoreGradient" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#4F46E5" stopOpacity={0.2} />
@@ -442,6 +450,7 @@ export default function ScorePage() {
                   />
                 </AreaChart>
               </ResponsiveContainer>
+              )}
             </CardContent>
           </Card>
         </>
