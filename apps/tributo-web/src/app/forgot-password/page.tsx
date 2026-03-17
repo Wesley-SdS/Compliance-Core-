@@ -1,22 +1,31 @@
 'use client';
 
 import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { requestPasswordReset } from '@/lib/auth-client';
 
+const forgotSchema = z.object({
+  email: z.string().email('Email invalido'),
+});
+
+type ForgotData = z.infer<typeof forgotSchema>;
+
 export default function ForgotPasswordPage() {
-  const [email, setEmail] = useState('');
   const [sent, setSent] = useState(false);
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  const { register, handleSubmit, formState: { errors, isSubmitting }, getValues } = useForm<ForgotData>({
+    resolver: zodResolver(forgotSchema),
+    defaultValues: { email: '' },
+  });
+
+  async function onSubmit(data: ForgotData) {
     setError('');
-    setLoading(true);
-
     try {
       const result = await requestPasswordReset({
-        email,
+        email: data.email,
         redirectTo: `${window.location.origin}/reset-password`,
       });
       if (result.error) {
@@ -26,8 +35,6 @@ export default function ForgotPasswordPage() {
       }
     } catch {
       setError('Erro ao conectar com o servidor');
-    } finally {
-      setLoading(false);
     }
   }
 
@@ -55,17 +62,18 @@ export default function ForgotPasswordPage() {
               </a>
             </div>
           ) : (
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit(onSubmit)}>
               <div className="space-y-4">
                 <div>
                   <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-1">Email</label>
-                  <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required
+                  <input id="email" type="email" {...register('email')}
                     className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                     placeholder="seu@email.com" />
+                  {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email.message}</p>}
                 </div>
-                <button type="submit" disabled={loading}
+                <button type="submit" disabled={isSubmitting}
                   className="w-full py-2.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors">
-                  {loading ? 'Enviando...' : 'Enviar link de redefinicao'}
+                  {isSubmitting ? 'Enviando...' : 'Enviar link de redefinicao'}
                 </button>
               </div>
             </form>

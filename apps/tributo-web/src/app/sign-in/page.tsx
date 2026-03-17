@@ -2,27 +2,46 @@
 
 import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { signIn } from '@/lib/auth-client';
+
+const credentialsSchema = z.object({
+  email: z.string().email('Email invalido'),
+  password: z.string().min(1, 'Senha obrigatoria'),
+});
+
+const magicLinkSchema = z.object({
+  email: z.string().email('Email invalido'),
+});
+
+type CredentialsData = z.infer<typeof credentialsSchema>;
+type MagicLinkData = z.infer<typeof magicLinkSchema>;
 
 export default function SignInPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get('callbackUrl') || '/';
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
   const [mode, setMode] = useState<'credentials' | 'magic-link'>('credentials');
   const [magicLinkSent, setMagicLinkSent] = useState(false);
 
-  async function handleCredentials(e: React.FormEvent) {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
+  const credentialsForm = useForm<CredentialsData>({
+    resolver: zodResolver(credentialsSchema),
+    defaultValues: { email: '', password: '' },
+  });
 
+  const magicLinkForm = useForm<MagicLinkData>({
+    resolver: zodResolver(magicLinkSchema),
+    defaultValues: { email: '' },
+  });
+
+  async function handleCredentials(data: CredentialsData) {
+    setError('');
     try {
-      const result = await signIn.email({ email, password });
+      const result = await signIn.email({ email: data.email, password: data.password });
       if (result.error) {
         setError(result.error.message || 'Erro ao fazer login');
       } else {
@@ -30,18 +49,13 @@ export default function SignInPage() {
       }
     } catch {
       setError('Erro ao conectar com o servidor');
-    } finally {
-      setLoading(false);
     }
   }
 
-  async function handleMagicLink(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleMagicLink(data: MagicLinkData) {
     setError('');
-    setLoading(true);
-
     try {
-      const result = await signIn.magicLink({ email, callbackURL: callbackUrl });
+      const result = await signIn.magicLink({ email: data.email, callbackURL: callbackUrl });
       if (result.error) {
         setError(result.error.message || 'Erro ao enviar link');
       } else {
@@ -49,14 +63,16 @@ export default function SignInPage() {
       }
     } catch {
       setError('Erro ao conectar com o servidor');
-    } finally {
-      setLoading(false);
     }
   }
 
   async function handleSocial(provider: 'google' | 'github') {
     await signIn.social({ provider, callbackURL: callbackUrl });
   }
+
+  const isSubmitting = mode === 'credentials'
+    ? credentialsForm.formState.isSubmitting
+    : magicLinkForm.formState.isSubmitting;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
@@ -78,7 +94,7 @@ export default function SignInPage() {
           {magicLinkSent ? (
             <div className="text-center py-6">
               <p className="text-sm text-slate-700 font-medium">Link enviado!</p>
-              <p className="text-xs text-slate-500 mt-1">Verifique seu email {email} para acessar.</p>
+              <p className="text-xs text-slate-500 mt-1">Verifique seu email para acessar.</p>
               <button
                 type="button"
                 onClick={() => setMagicLinkSent(false)}
@@ -136,24 +152,25 @@ export default function SignInPage() {
                 </button>
               </div>
 
-              <form onSubmit={mode === 'credentials' ? handleCredentials : handleMagicLink}>
-                <div className="space-y-4">
-                  <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-1">
-                      Email
-                    </label>
-                    <input
-                      id="email"
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                      className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                      placeholder="seu@email.com"
-                    />
-                  </div>
+              {mode === 'credentials' ? (
+                <form onSubmit={credentialsForm.handleSubmit(handleCredentials)}>
+                  <div className="space-y-4">
+                    <div>
+                      <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-1">
+                        Email
+                      </label>
+                      <input
+                        id="email"
+                        type="email"
+                        {...credentialsForm.register('email')}
+                        className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                        placeholder="seu@email.com"
+                      />
+                      {credentialsForm.formState.errors.email && (
+                        <p className="text-xs text-red-500 mt-1">{credentialsForm.formState.errors.email.message}</p>
+                      )}
+                    </div>
 
-                  {mode === 'credentials' && (
                     <div>
                       <div className="flex items-center justify-between mb-1">
                         <label htmlFor="password" className="block text-sm font-medium text-slate-700">
@@ -166,24 +183,53 @@ export default function SignInPage() {
                       <input
                         id="password"
                         type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
+                        {...credentialsForm.register('password')}
                         className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                         placeholder="********"
                       />
+                      {credentialsForm.formState.errors.password && (
+                        <p className="text-xs text-red-500 mt-1">{credentialsForm.formState.errors.password.message}</p>
+                      )}
                     </div>
-                  )}
 
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="w-full py-2.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors"
-                  >
-                    {loading ? 'Entrando...' : mode === 'credentials' ? 'Entrar' : 'Enviar Magic Link'}
-                  </button>
-                </div>
-              </form>
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="w-full py-2.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors"
+                    >
+                      {isSubmitting ? 'Entrando...' : 'Entrar'}
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <form onSubmit={magicLinkForm.handleSubmit(handleMagicLink)}>
+                  <div className="space-y-4">
+                    <div>
+                      <label htmlFor="ml-email" className="block text-sm font-medium text-slate-700 mb-1">
+                        Email
+                      </label>
+                      <input
+                        id="ml-email"
+                        type="email"
+                        {...magicLinkForm.register('email')}
+                        className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                        placeholder="seu@email.com"
+                      />
+                      {magicLinkForm.formState.errors.email && (
+                        <p className="text-xs text-red-500 mt-1">{magicLinkForm.formState.errors.email.message}</p>
+                      )}
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="w-full py-2.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors"
+                    >
+                      {isSubmitting ? 'Enviando...' : 'Enviar Magic Link'}
+                    </button>
+                  </div>
+                </form>
+              )}
 
               <p className="mt-4 text-center text-xs text-slate-500">
                 Nao tem conta?{' '}
