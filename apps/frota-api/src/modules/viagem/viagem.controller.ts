@@ -3,13 +3,13 @@ import {
   Param, Body, Query, UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
-import { ClerkAuthGuard, CurrentUser, AuthUser } from '@compliancecore/sdk';
+import { BetterAuthGuard, CurrentUser, AuthUser } from '@compliancecore/sdk';
 import { ViagemService } from './viagem.service';
 import { CreateViagemDto, UpdateViagemDto } from './viagem.dto';
 
 @ApiTags('viagens')
 @ApiBearerAuth()
-@UseGuards(ClerkAuthGuard)
+@UseGuards(BetterAuthGuard)
 @Controller('viagens')
 export class ViagemController {
   constructor(private readonly viagemService: ViagemService) {}
