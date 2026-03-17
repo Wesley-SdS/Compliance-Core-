@@ -18,13 +18,13 @@ import {
   ApiQuery,
   ApiBearerAuth,
 } from '@nestjs/swagger';
-import { ClerkAuthGuard, CurrentUser, AuthUser } from '@compliancecore/sdk';
+import { BetterAuthGuard, CurrentUser, AuthUser } from '@compliancecore/sdk';
 import { PopService } from './pop.service';
 import { GeneratePopDto, ApprovePopDto } from './pop.dto';
 
 @ApiTags('pops')
 @ApiBearerAuth()
-@UseGuards(ClerkAuthGuard)
+@UseGuards(BetterAuthGuard)
 @Controller('pops')
 export class PopController {
   constructor(private readonly popService: PopService) {}

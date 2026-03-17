@@ -38,7 +38,7 @@ vi.mock('@compliancecore/sdk', () => ({
   DatabaseService: vi.fn().mockImplementation(() => mockDb),
   ComplianceCoreConfigService: vi.fn(),
   ComplianceLogger: vi.fn(),
-  ClerkAuthGuard: vi.fn().mockImplementation(() => ({ canActivate: () => true })),
+  BetterAuthGuard: vi.fn().mockImplementation(() => ({ canActivate: () => true })),
   CurrentUser: () => () => {},
   AuthUser: vi.fn(),
   VektusWebhookGuard: vi.fn().mockImplementation(() => ({ canActivate: () => true })),

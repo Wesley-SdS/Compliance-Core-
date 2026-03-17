@@ -17,7 +17,7 @@ import {
   ApiParam,
   ApiBearerAuth,
 } from '@nestjs/swagger';
-import { ClerkAuthGuard, CurrentUser, AuthUser } from '@compliancecore/sdk';
+import { BetterAuthGuard, CurrentUser, AuthUser } from '@compliancecore/sdk';
 import { ClinicaService } from './clinica.service';
 import {
   CreateClinicaDto,
@@ -29,7 +29,7 @@ import {
 
 @ApiTags('clinicas')
 @ApiBearerAuth()
-@UseGuards(ClerkAuthGuard)
+@UseGuards(BetterAuthGuard)
 @Controller('clinicas')
 export class ClinicaController {
   constructor(private readonly clinicaService: ClinicaService) {}

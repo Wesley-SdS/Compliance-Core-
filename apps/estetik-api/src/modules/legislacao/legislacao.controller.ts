@@ -16,12 +16,12 @@ import {
   ApiQuery,
   ApiBearerAuth,
 } from '@nestjs/swagger';
-import { ClerkAuthGuard, CurrentUser, AuthUser } from '@compliancecore/sdk';
+import { BetterAuthGuard, CurrentUser, AuthUser } from '@compliancecore/sdk';
 import { LegislacaoService } from './legislacao.service';
 
 @ApiTags('legislacao')
 @ApiBearerAuth()
-@UseGuards(ClerkAuthGuard)
+@UseGuards(BetterAuthGuard)
 @Controller('legislacao')
 export class LegislacaoController {
   constructor(private readonly legislacaoService: LegislacaoService) {}

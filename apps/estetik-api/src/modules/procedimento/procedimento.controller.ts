@@ -19,13 +19,13 @@ import {
   ApiQuery,
   ApiBearerAuth,
 } from '@nestjs/swagger';
-import { ClerkAuthGuard, CurrentUser, AuthUser } from '@compliancecore/sdk';
+import { BetterAuthGuard, CurrentUser, AuthUser } from '@compliancecore/sdk';
 import { ProcedimentoService } from './procedimento.service';
 import { CreateProcedimentoDto, UpdateProcedimentoDto } from './procedimento.dto';
 
 @ApiTags('procedimentos')
 @ApiBearerAuth()
-@UseGuards(ClerkAuthGuard)
+@UseGuards(BetterAuthGuard)
 @Controller('procedimentos')
 export class ProcedimentoController {
   constructor(private readonly procedimentoService: ProcedimentoService) {}
