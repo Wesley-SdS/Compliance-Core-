@@ -7,3 +7,5 @@ export * from './use-decisoes';
 export * from './use-otimizacao';
 export * from './use-documentos';
 export * from './use-timeline';
+export * from './use-alerts';
+export * from './use-checklist';

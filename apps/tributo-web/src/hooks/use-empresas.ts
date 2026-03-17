@@ -7,12 +7,13 @@ import type { Empresa, ScoreData, PaginatedResult } from '@/lib/types';
 export function useEmpresas(params?: { regime?: string; search?: string }) {
   return useQuery({
     queryKey: ['empresas', params],
-    queryFn: () => {
+    queryFn: async () => {
       const searchParams = new URLSearchParams();
       if (params?.regime && params.regime !== 'Todos') searchParams.set('regime', params.regime);
       if (params?.search) searchParams.set('search', params.search);
       const qs = searchParams.toString();
-      return apiFetch<Empresa[]>(`/empresas${qs ? `?${qs}` : ''}`);
+      const res = await apiFetch<PaginatedResult<Empresa> | Empresa[]>(`/empresas${qs ? `?${qs}` : ''}`);
+      return Array.isArray(res) ? res : res.data;
     },
   });
 }
