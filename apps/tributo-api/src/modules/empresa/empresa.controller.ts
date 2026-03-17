@@ -1,8 +1,9 @@
 import {
   Controller, Get, Post, Put, Delete,
-  Param, Body, Query, UseGuards,
+  Param, Body, Query, UseGuards, Res, Header,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery, ApiProduces } from '@nestjs/swagger';
+import type { Response } from 'express';
 import { BetterAuthGuard, CurrentUser, AuthUser } from '@compliancecore/sdk';
 import { EmpresaService } from './empresa.service';
 import { CreateEmpresaDto, UpdateEmpresaDto } from './empresa.dto';
@@ -24,8 +25,21 @@ export class EmpresaController {
   @ApiOperation({ summary: 'Listar todas as empresas' })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
-  findAll(@Query('page') page = 1, @Query('limit') limit = 20) {
-    return this.empresaService.findAll(page, limit);
+  @ApiQuery({ name: 'search', required: false, type: String })
+  @ApiQuery({ name: 'regime', required: false, type: String })
+  findAll(
+    @Query('page') page = 1,
+    @Query('limit') limit = 20,
+    @Query('search') search?: string,
+    @Query('regime') regime?: string,
+  ) {
+    return this.empresaService.findAll(page, limit, { search, regime });
+  }
+
+  @Get('score')
+  @ApiOperation({ summary: 'Score global de compliance (media de todas empresas)' })
+  getGlobalScore() {
+    return this.empresaService.getGlobalScore();
   }
 
   @Get(':id')
@@ -84,8 +98,26 @@ export class EmpresaController {
     return this.empresaService.getChecklist(id);
   }
 
+  @Get(':id/relatorio')
+  @ApiOperation({ summary: 'Gerar relatorio PDF de compliance da empresa' })
+  @ApiProduces('application/pdf')
+  @ApiQuery({ name: 'meses', required: false, type: Number, description: 'Periodo em meses (default: 12)' })
+  async getRelatorio(
+    @Param('id') id: string,
+    @Query('meses') meses = 12,
+    @Res() res: Response,
+  ) {
+    const buffer = await this.empresaService.getRelatorio(id, meses);
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="relatorio-${id}.pdf"`,
+      'Content-Length': buffer.length,
+    });
+    res.end(buffer);
+  }
+
   @Get(':id/dossier')
-  @ApiOperation({ summary: 'Gerar dossie completo da empresa' })
+  @ApiOperation({ summary: 'Gerar dossie completo da empresa (JSON)' })
   getDossier(@Param('id') id: string) {
     return this.empresaService.getDossier(id);
   }

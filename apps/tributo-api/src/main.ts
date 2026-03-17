@@ -29,6 +29,10 @@ async function bootstrap() {
     .addTag('empresas', 'Gerenciamento de empresas clientes')
     .addTag('calculos', 'Calculos e simulacoes tributarias')
     .addTag('sped', 'Gestao de arquivos SPED')
+    .addTag('decisoes', 'Decisoes fiscais')
+    .addTag('obrigacoes', 'Obrigacoes acessorias')
+    .addTag('legislacao', 'Legislacao tributaria')
+    .addTag('otimizador', 'Otimizacao de mix tributario')
     .build();
 
   const document = SwaggerModule.createDocument(app, swaggerConfig);

@@ -3,6 +3,7 @@ import { ulid } from 'ulid';
 import { EventStoreService } from '@compliancecore/sdk/event-store/event-store.service';
 import { ScoreEngineService } from '@compliancecore/sdk/score-engine/score-engine.service';
 import { VektusAdapterService } from '@compliancecore/sdk/vektus/vektus-adapter.service';
+import { EvidenceGeneratorService } from '@compliancecore/sdk/evidence/evidence-generator.service';
 import { DatabaseService } from '@compliancecore/sdk/shared/database';
 import { ComplianceLogger } from '@compliancecore/sdk/shared/logger';
 import { TRIBUTO_CRITERIA, TRIBUTO_DOC_CATEGORIES } from '../../config/tributo.config';
@@ -15,6 +16,7 @@ export class EmpresaService {
     private readonly eventStore: EventStoreService,
     private readonly scoreEngine: ScoreEngineService,
     private readonly vektus: VektusAdapterService,
+    private readonly evidenceGenerator: EvidenceGeneratorService,
     private readonly logger: ComplianceLogger,
   ) {
     this.logger.setContext('EmpresaService');
@@ -40,14 +42,53 @@ export class EmpresaService {
     return this.findById(id);
   }
 
-  async findAll(page = 1, limit = 20) {
+  async findAll(page = 1, limit = 20, filters?: { search?: string; regime?: string }) {
+    const conditions: string[] = [];
+    const values: any[] = [];
+    let idx = 1;
+
+    if (filters?.search) {
+      conditions.push(`(razao_social ILIKE $${idx} OR cnpj ILIKE $${idx} OR nome_fantasia ILIKE $${idx})`);
+      values.push(`%${filters.search}%`);
+      idx++;
+    }
+    if (filters?.regime) {
+      conditions.push(`regime_tributario = $${idx}`);
+      values.push(filters.regime);
+      idx++;
+    }
+
+    const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
     const offset = (page - 1) * limit;
+
+    values.push(limit, offset);
     const [rows, countResult] = await Promise.all([
-      this.db.query(`SELECT * FROM empresas ORDER BY created_at DESC LIMIT $1 OFFSET $2`, [limit, offset]),
-      this.db.queryOne<{ count: string }>(`SELECT COUNT(*) as count FROM empresas`),
+      this.db.query(`SELECT * FROM empresas ${where} ORDER BY created_at DESC LIMIT $${idx} OFFSET $${idx + 1}`, values),
+      this.db.queryOne<{ count: string }>(`SELECT COUNT(*) as count FROM empresas ${where}`, values.slice(0, -2)),
     ]);
     const total = parseInt(countResult?.count ?? '0', 10);
     return { data: rows, total, page, limit, hasMore: offset + rows.length < total };
+  }
+
+  async getGlobalScore() {
+    const empresas = await this.db.query(`SELECT id FROM empresas LIMIT 100`);
+    if (empresas.length === 0) {
+      return { value: 0, level: 'CRITICO', trend: 'ESTAVEL', criteria: [] };
+    }
+
+    const scores = await Promise.all(
+      empresas.map((e: any) => this.calculateScore(e.id).catch(() => null)),
+    );
+
+    const validScores = scores.filter((s): s is NonNullable<typeof s> => s !== null);
+    if (validScores.length === 0) {
+      return { value: 0, level: 'CRITICO', trend: 'ESTAVEL', criteria: [] };
+    }
+
+    const avgValue = Math.round(validScores.reduce((sum, s) => sum + (s.value ?? 0), 0) / validScores.length);
+    const level = avgValue >= 80 ? 'EXCELENTE' : avgValue >= 60 ? 'BOM' : avgValue >= 40 ? 'ATENCAO' : 'CRITICO';
+
+    return { value: avgValue, level, trend: 'ESTAVEL' as const, criteria: validScores[0]?.criteria ?? [] };
   }
 
   async findById(id: string) {
@@ -174,6 +215,18 @@ export class EmpresaService {
     await this.findById(id);
     return this.eventStore.getAuditTrail({
       aggregateId: id, aggregateType: 'empresa', page, limit,
+    });
+  }
+
+  async getRelatorio(id: string, meses = 12): Promise<Buffer> {
+    const empresa = await this.findById(id) as any;
+    const now = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth() - meses, 1);
+
+    return this.evidenceGenerator.generateDossier(id, 'empresa', { start, end: now }, {
+      name: empresa.razao_social,
+      identifier: empresa.cnpj,
+      regimeTributario: empresa.regime_tributario,
     });
   }
 }
