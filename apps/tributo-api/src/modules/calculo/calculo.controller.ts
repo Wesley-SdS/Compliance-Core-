@@ -32,6 +32,12 @@ export class CalculoController {
     return this.calculoService.getHistorico(empresaId, page, limit);
   }
 
+  @Get('projecao/:empresaId')
+  @ApiOperation({ summary: 'Projecao multi-ano 2026-2033 (transicao CBS/IBS)' })
+  projetar(@Param('empresaId') empresaId: string) {
+    return this.calculoService.projetar(empresaId);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Buscar calculo por ID' })
   findById(@Param('id') id: string) {

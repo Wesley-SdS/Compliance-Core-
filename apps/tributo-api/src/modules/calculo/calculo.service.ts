@@ -5,6 +5,8 @@ import { DatabaseService } from '@compliancecore/sdk/shared/database';
 import { ComplianceLogger } from '@compliancecore/sdk/shared/logger';
 
 import { SimularCalculoDto } from './calculo.dto';
+import { CalculoEngine } from './calculo-engine';
+
 export { SimularCalculoDto };
 
 export interface ResultadoCalculo {
@@ -24,8 +26,7 @@ export interface ResultadoCalculo {
 
 @Injectable()
 export class CalculoService {
-  private readonly CBS_ALIQUOTA_PADRAO = 0.088;
-  private readonly IBS_ALIQUOTA_PADRAO = 0.175;
+  private readonly engine = new CalculoEngine();
 
   constructor(
     private readonly db: DatabaseService,
@@ -37,53 +38,87 @@ export class CalculoService {
 
   async simular(dto: SimularCalculoDto, actorId: string): Promise<ResultadoCalculo> {
     const id = ulid();
-    const aliquotaCbs = dto.aliquotaCbs ?? this.CBS_ALIQUOTA_PADRAO;
-    const aliquotaIbs = dto.aliquotaIbs ?? this.IBS_ALIQUOTA_PADRAO;
-    const aliquotaIs = dto.aliquotaIs ?? 0;
 
-    const cbs = dto.faturamentoBruto * aliquotaCbs;
-    const ibs = dto.faturamentoBruto * aliquotaIbs;
-    const is = dto.faturamentoBruto * aliquotaIs;
-    const creditosTotal = (dto.creditosPis ?? 0) + (dto.creditosCofins ?? 0);
-    const totalTributos = Math.max(0, cbs + ibs + is - creditosTotal);
-    const cargaTributariaEfetiva = dto.faturamentoBruto > 0
-      ? (totalTributos / dto.faturamentoBruto) * 100
-      : 0;
-    const valorLiquido = dto.faturamentoBruto - totalTributos;
+    // Buscar regime da empresa para comparativo
+    const empresa = await this.db.queryOne<any>(
+      `SELECT regime_tributario FROM empresas WHERE id = $1`, [dto.empresaId],
+    );
+
+    // Extrair ano da competência para aplicar fator de transição
+    const ano = dto.competencia ? parseInt(dto.competencia.substring(0, 4), 10) : 2033;
+
+    const calc = this.engine.calcularSimples({
+      faturamentoBruto: dto.faturamentoBruto,
+      tipoOperacao: dto.tipoOperacao,
+      aliquotaCbs: dto.aliquotaCbs,
+      aliquotaIbs: dto.aliquotaIbs,
+      aliquotaIs: dto.aliquotaIs,
+      creditosPis: dto.creditosPis,
+      creditosCofins: dto.creditosCofins,
+      regimeTributario: empresa?.regime_tributario,
+      ano,
+    });
 
     const resultado: ResultadoCalculo = {
       id,
       empresaId: dto.empresaId,
       faturamentoBruto: dto.faturamentoBruto,
-      cbs: Math.round(cbs * 100) / 100,
-      ibs: Math.round(ibs * 100) / 100,
-      is: Math.round(is * 100) / 100,
-      totalTributos: Math.round(totalTributos * 100) / 100,
-      cargaTributariaEfetiva: Math.round(cargaTributariaEfetiva * 100) / 100,
-      creditosAproveitados: Math.round(creditosTotal * 100) / 100,
-      valorLiquido: Math.round(valorLiquido * 100) / 100,
+      cbs: calc.cbs,
+      ibs: calc.ibs,
+      is: calc.is,
+      totalTributos: calc.totalTributos,
+      cargaTributariaEfetiva: calc.cargaTributariaEfetiva,
+      creditosAproveitados: calc.creditosAproveitados,
+      valorLiquido: calc.valorLiquido,
       competencia: dto.competencia,
       simuladoEm: new Date(),
     };
 
-    await this.db.query(
-      `INSERT INTO calculos_tributarios (id, empresa_id, faturamento_bruto, cbs, ibs, imposto_seletivo,
-        total_tributos, carga_tributaria_efetiva, creditos_aproveitados, valor_liquido, competencia,
-        tipo_operacao, descricao, simulado_em)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW())`,
-      [id, dto.empresaId, dto.faturamentoBruto, resultado.cbs, resultado.ibs, resultado.is,
-        resultado.totalTributos, resultado.cargaTributariaEfetiva, resultado.creditosAproveitados,
-        resultado.valorLiquido, dto.competencia, dto.tipoOperacao, dto.descricao || null],
-    );
+    await this.db.transaction(async (query) => {
+      await query(
+        `INSERT INTO calculos_tributarios (id, empresa_id, faturamento_bruto, cbs, ibs, imposto_seletivo,
+          total_tributos, carga_tributaria_efetiva, creditos_aproveitados, valor_liquido, competencia,
+          tipo_operacao, descricao, simulado_em)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW())`,
+        [id, dto.empresaId, dto.faturamentoBruto, resultado.cbs, resultado.ibs, resultado.is,
+          resultado.totalTributos, resultado.cargaTributariaEfetiva, resultado.creditosAproveitados,
+          resultado.valorLiquido, dto.competencia, dto.tipoOperacao, dto.descricao || null],
+      );
+    });
 
     await this.eventStore.append(dto.empresaId, 'empresa', 'CALCULO_SIMULADO', {
-      calculoId: id, tipoOperacao: dto.tipoOperacao, totalTributos: resultado.totalTributos,
+      calculoId: id, tipoOperacao: dto.tipoOperacao,
+      totalTributos: resultado.totalTributos,
+      impostoRegimeAtual: calc.impostoRegimeAtual,
+      diferencaRegime: calc.diferencaRegime,
     }, {
       actorId, actorRole: 'contador', ip: '0.0.0.0', correlationId: ulid(),
     });
 
     this.logger.log(`Calculo simulado: ${id} para empresa ${dto.empresaId}`, { calculoId: id });
     return resultado;
+  }
+
+  async projetar(empresaId: string) {
+    const empresa = await this.db.queryOne<any>(
+      `SELECT * FROM empresas WHERE id = $1`, [empresaId],
+    );
+    if (!empresa) throw new NotFoundException(`Empresa ${empresaId} nao encontrada`);
+
+    // Buscar último cálculo para usar como base
+    const ultimoCalculo = await this.db.queryOne<any>(
+      `SELECT * FROM calculos_tributarios WHERE empresa_id = $1 ORDER BY simulado_em DESC LIMIT 1`,
+      [empresaId],
+    );
+
+    const faturamentoBruto = ultimoCalculo?.faturamento_bruto ?? 100000;
+    const tipoOperacao = ultimoCalculo?.tipo_operacao ?? 'VENDA_MERCADORIA';
+
+    return this.engine.projetarSimples({
+      faturamentoBruto,
+      tipoOperacao,
+      regimeTributario: empresa.regime_tributario,
+    });
   }
 
   async getHistorico(empresaId: string, page = 1, limit = 20) {
