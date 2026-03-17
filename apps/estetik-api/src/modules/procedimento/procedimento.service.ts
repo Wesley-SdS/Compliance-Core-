@@ -1,7 +1,6 @@
 import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { ulid } from 'ulid';
-import { EventStoreService } from '@compliancecore/sdk/event-store/event-store.service';
-import { DatabaseService } from '@compliancecore/sdk/shared/database';
+import { EventStoreService, DatabaseService } from '@compliancecore/sdk';
 
 export interface Procedimento {
   id: string;
@@ -88,12 +87,12 @@ export class ProcedimentoService {
     const offset = (page - 1) * limit;
 
     const countResult = await this.db.queryOne<{ count: string }>(
-      'SELECT COUNT(*) as count FROM procedimentos',
+      "SELECT COUNT(*) as count FROM procedimentos WHERE data->>'ativo' = 'true'",
     );
     const total = parseInt(countResult?.count ?? '0', 10);
 
     const rows = await this.db.query<{ data: Procedimento }>(
-      'SELECT data FROM procedimentos ORDER BY created_at DESC LIMIT $1 OFFSET $2',
+      "SELECT data FROM procedimentos WHERE data->>'ativo' = 'true' ORDER BY created_at DESC LIMIT $1 OFFSET $2",
       [limit, offset],
     );
 
@@ -151,9 +150,18 @@ export class ProcedimentoService {
   }
 
   async delete(id: string, actorId: string): Promise<void> {
-    await this.findOne(id);
+    const existing = await this.findOne(id);
 
-    await this.db.query('DELETE FROM procedimentos WHERE id = $1', [id]);
+    const updated: Procedimento = {
+      ...existing,
+      ativo: false,
+      updatedAt: new Date(),
+    };
+
+    await this.db.query(
+      'UPDATE procedimentos SET data = $1, updated_at = $2 WHERE id = $3',
+      [JSON.stringify(updated), updated.updatedAt, id],
+    );
 
     await this.eventStore.append(
       id,
@@ -168,7 +176,7 @@ export class ProcedimentoService {
       },
     );
 
-    this.logger.log(`Procedimento deleted: ${id}`);
+    this.logger.log(`Procedimento deleted (soft): ${id}`);
   }
 
   async findByTipo(tipo: string): Promise<Procedimento[]> {

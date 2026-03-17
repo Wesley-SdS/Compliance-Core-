@@ -8,6 +8,7 @@ import {
   IsBoolean,
   IsDateString,
   IsNumber,
+  IsIn,
   ValidateNested,
   Min,
   Max,
@@ -15,6 +16,13 @@ import {
   MinLength,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+
+const VALID_DOC_CATEGORIES = [
+  'alvara', 'licenca_sanitaria', 'registro_anvisa', 'pop',
+  'tcle', 'contrato', 'laudo_tecnico', 'certificado_treinamento',
+  'manual_equipamento', 'nota_fiscal', 'foto_antes_depois',
+  'pgrss', 'laudo_pgrss', 'outro',
+] as const;
 
 export class ResponsavelTecnicoDto {
   @ApiProperty({ description: 'Nome do responsavel tecnico' })
@@ -242,6 +250,7 @@ export class UploadDocumentDto {
   })
   @IsString()
   @IsNotEmpty()
+  @IsIn(VALID_DOC_CATEGORIES)
   category: string;
 
   @ApiPropertyOptional({ description: 'Data de expiracao do documento' })
@@ -260,6 +269,7 @@ export class SubmitChecklistDto {
   @ApiProperty({ description: 'Respostas do checklist' })
   @IsArray()
   @ValidateNested({ each: true })
+  @Type(() => ChecklistResponseItemDto)
   responses: ChecklistResponseItemDto[];
 }
 

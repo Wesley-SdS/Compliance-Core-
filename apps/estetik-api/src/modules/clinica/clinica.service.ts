@@ -211,13 +211,37 @@ export class ClinicaService {
   }
 
   async getScore(id: string): Promise<ComplianceScore | null> {
-    const row = await this.db.queryOne<{ data: ComplianceScore }>(
-      `SELECT data FROM compliance_scores
+    const row = await this.db.queryOne<{
+      id: string;
+      aggregate_id: string;
+      overall: number;
+      level: string;
+      breakdown: string;
+      trend: string;
+      calculated_at: Date;
+    }>(
+      `SELECT id, aggregate_id, overall, level, breakdown, trend, calculated_at
+       FROM compliance_scores
        WHERE aggregate_id = $1
-       ORDER BY created_at DESC LIMIT 1`,
+       ORDER BY calculated_at DESC LIMIT 1`,
       [id],
     );
-    return row?.data ?? null;
+    if (!row) return null;
+    return {
+      id: row.id,
+      aggregateId: row.aggregate_id,
+      overall: row.overall,
+      level: row.level as any,
+      breakdown: typeof row.breakdown === 'string' ? JSON.parse(row.breakdown) : row.breakdown,
+      trend: row.trend as any,
+      calculatedAt: row.calculated_at,
+    };
+  }
+
+  async getScoreHistory(id: string, months: number = 6): Promise<any> {
+    const start = new Date();
+    start.setMonth(start.getMonth() - months);
+    return this.scoreEngine.getHistory(id, { start, end: new Date() });
   }
 
   async getEvents(id: string, page: number = 1, limit: number = 20): Promise<PaginatedEvents> {

@@ -2,7 +2,6 @@ import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Logger } from '@nestjs/common';
 import { Job } from 'bullmq';
 import {
-  LegislationMonitorService,
   DatabaseService,
 } from '@compliancecore/sdk';
 import { ulid } from 'ulid';
@@ -14,7 +13,6 @@ export class ScraperProcessor extends WorkerHost {
   private readonly logger = new Logger(ScraperProcessor.name);
 
   constructor(
-    private readonly legislationMonitor: LegislationMonitorService,
     private readonly db: DatabaseService,
     private readonly anvisaScraper: AnvisaScraper,
     private readonly douScraper: DOUScraper,

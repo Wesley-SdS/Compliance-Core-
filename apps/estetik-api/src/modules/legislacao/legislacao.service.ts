@@ -26,7 +26,7 @@ export class LegislacaoService {
 
     const countResult = await this.db.queryOne<{ count: string }>(
       `SELECT COUNT(*) as count FROM legislation_items
-       WHERE affected_verticals::text LIKE '%estetik%'`,
+       WHERE affected_verticals::jsonb ? 'estetik'`,
     );
     const total = parseInt(countResult?.count ?? '0', 10);
 
@@ -40,7 +40,7 @@ export class LegislacaoService {
     }>(
       `SELECT id, title, summary, url, published_at, source_id
        FROM legislation_items
-       WHERE affected_verticals::text LIKE '%estetik%'
+       WHERE affected_verticals::jsonb ? 'estetik'
        ORDER BY published_at DESC
        LIMIT $1 OFFSET $2`,
       [limit, offset],

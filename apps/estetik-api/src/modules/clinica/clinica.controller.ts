@@ -91,6 +91,17 @@ export class ClinicaController {
     return this.clinicaService.calculateScore(id);
   }
 
+  @Get(':id/score/history')
+  @ApiOperation({ summary: 'Obter historico de scores' })
+  @ApiParam({ name: 'id', description: 'ID da clinica' })
+  @ApiResponse({ status: 200, description: 'Historico de scores' })
+  async getScoreHistory(
+    @Param('id') id: string,
+    @Query('months') months: number = 6,
+  ) {
+    return this.clinicaService.getScoreHistory(id, months);
+  }
+
   @Get(':id/events')
   @ApiOperation({ summary: 'Obter trilha de auditoria da clinica' })
   @ApiParam({ name: 'id', description: 'ID da clinica' })

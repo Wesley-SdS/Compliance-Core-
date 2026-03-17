@@ -6,11 +6,8 @@ import {
   HttpStatus,
   UseGuards,
   Logger,
-  RawBodyRequest,
-  Req,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { Request } from 'express';
 import { VektusWebhookGuard, DatabaseService, EventStoreService } from '@compliancecore/sdk';
 import { ulid } from 'ulid';
 
