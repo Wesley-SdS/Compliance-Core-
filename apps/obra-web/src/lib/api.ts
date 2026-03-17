@@ -1,12 +1,17 @@
+'use client';
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3002';
 
 export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(init?.headers as Record<string, string>),
+  };
+
   const res = await fetch(`${API_URL}${path}`, {
     ...init,
-    headers: {
-      'Content-Type': 'application/json',
-      ...init?.headers,
-    },
+    headers,
+    credentials: 'include', // Send session cookie automatically
   });
 
   if (!res.ok) {
