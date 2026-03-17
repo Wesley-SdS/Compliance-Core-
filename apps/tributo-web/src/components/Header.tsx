@@ -1,6 +1,7 @@
 'use client';
 
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import { useSession, signOut } from '@/lib/auth-client';
 
 const pageTitles: Record<string, string> = {
   '/': 'Dashboard',
@@ -16,10 +17,22 @@ const pageTitles: Record<string, string> = {
 
 export function Header() {
   const pathname = usePathname();
+  const router = useRouter();
+  const { data: session } = useSession();
 
   const title =
     pageTitles[pathname] ??
     (pathname.startsWith('/empresas/') ? 'Detalhe da Empresa' : 'TributoSim');
+
+  const userName = session?.user?.name ?? session?.user?.email ?? '';
+  const initials = userName
+    ? userName.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase()
+    : 'U';
+
+  const handleSignOut = async () => {
+    await signOut();
+    router.push('/sign-in');
+  };
 
   return (
     <header className="h-16 border-b border-slate-200 bg-white flex items-center justify-between px-6">
@@ -35,9 +48,19 @@ export function Header() {
           </svg>
           <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full" />
         </button>
-        <div className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-sm font-semibold">
-          U
+        <div className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-sm font-semibold" title={userName}>
+          {initials}
         </div>
+        <button
+          type="button"
+          onClick={handleSignOut}
+          className="text-sm text-slate-500 hover:text-slate-700 transition-colors"
+          title="Sair"
+        >
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3-3h-9m9 0l-3-3m3 3l-3 3" />
+          </svg>
+        </button>
       </div>
     </header>
   );

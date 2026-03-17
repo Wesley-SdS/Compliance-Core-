@@ -2,7 +2,9 @@
 
 import Link from 'next/link';
 import { useGlobalScore, useEmpresas, useObrigacoes } from '@/hooks';
-import { scoreLevelColor, scoreLevelBg, formatDate } from '@/lib/utils';
+import { scoreLevelColor, formatDate } from '@/lib/utils';
+import { ScoreGauge } from '@compliancecore/ui';
+import type { ComplianceLevel, ScoreTrend } from '@compliancecore/shared';
 
 function StatusBadge({ status }: { status: string }) {
   const styles: Record<string, string> = {
@@ -31,18 +33,14 @@ export default function DashboardPage() {
     <div className="space-y-6">
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className={`rounded-xl p-6 flex flex-col items-center justify-center border ${score ? scoreLevelBg(score.level) : 'bg-slate-50 border-slate-200'}`}>
-          <div className={`text-5xl font-bold ${score ? scoreLevelColor(score.level) : 'text-slate-400'}`}>
-            {score?.value ?? '--'}
-          </div>
-          <div className={`text-sm font-medium mt-1 ${score ? scoreLevelColor(score.level) : 'text-slate-400'}`}>
-            {score?.level ?? 'Carregando...'}
-          </div>
-          {score && (
-            <div className={`text-xs ${trendColor} mt-2 font-medium`}>
-              {trendArrow} {score.trend.toLowerCase()}
-            </div>
-          )}
+        <div className="rounded-xl bg-white border border-slate-200 p-6 flex items-center justify-center">
+          <ScoreGauge
+            score={score?.value ?? 0}
+            level={(score?.level as ComplianceLevel) ?? 'CRITICO'}
+            trend={(score?.trend as ScoreTrend) ?? 'ESTAVEL'}
+            showLabel
+            size={120}
+          />
         </div>
 
         <div className="rounded-xl bg-white border border-slate-200 p-6">
