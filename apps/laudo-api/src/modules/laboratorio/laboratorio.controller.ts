@@ -3,13 +3,13 @@ import {
   Param, Body, Query, UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
-import { ClerkAuthGuard, CurrentUser, AuthUser } from '@compliancecore/sdk';
+import { BetterAuthGuard, CurrentUser, AuthUser } from '@compliancecore/sdk';
 import { LaboratorioService } from './laboratorio.service';
 import { CreateLaboratorioDto, UpdateLaboratorioDto } from './laboratorio.dto';
 
 @ApiTags('laboratorios')
 @ApiBearerAuth()
-@UseGuards(ClerkAuthGuard)
+@UseGuards(BetterAuthGuard)
 @Controller('laboratorios')
 export class LaboratorioController {
   constructor(private readonly laboratorioService: LaboratorioService) {}
