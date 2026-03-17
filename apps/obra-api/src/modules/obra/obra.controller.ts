@@ -3,13 +3,13 @@ import {
   Param, Body, Query, UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
-import { ClerkAuthGuard, CurrentUser, AuthUser } from '@compliancecore/sdk';
+import { BetterAuthGuard, CurrentUser, AuthUser } from '@compliancecore/sdk';
 import { ObraService } from './obra.service';
-import { CreateObraDto, UpdateObraDto } from './obra.dto';
+import { CreateObraDto, UpdateObraDto, UploadNotaFiscalDto, SubmitChecklistDto, UploadDocumentoDto } from './obra.dto';
 
 @ApiTags('obras')
 @ApiBearerAuth()
-@UseGuards(ClerkAuthGuard)
+@UseGuards(BetterAuthGuard)
 @Controller('obras')
 export class ObraController {
   constructor(private readonly obraService: ObraService) {}
@@ -100,5 +100,51 @@ export class ObraController {
     @Query('limit') limit = 50,
   ) {
     return this.obraService.getTimeline(id, page, limit);
+  }
+
+  @Get(':id/score/history')
+  @ApiOperation({ summary: 'Historico de score de compliance' })
+  @ApiQuery({ name: 'months', required: false, type: Number })
+  getScoreHistory(@Param('id') id: string, @Query('months') months: number = 6) {
+    return this.obraService.getScoreHistory(id, months);
+  }
+
+  @Post(':id/notas')
+  @ApiOperation({ summary: 'Upload de nota fiscal para OCR' })
+  uploadNota(
+    @Param('id') id: string,
+    @Body() dto: UploadNotaFiscalDto,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.obraService.uploadNota(id, dto, user.id);
+  }
+
+  @Get(':id/notas')
+  @ApiOperation({ summary: 'Listar notas fiscais da obra' })
+  getNotas(@Param('id') id: string) {
+    return this.obraService.getNotas(id);
+  }
+
+  @Post(':id/etapas/:etapaId/checklist')
+  @ApiOperation({ summary: 'Submeter checklist de etapa' })
+  submitEtapaChecklist(
+    @Param('id') obraId: string,
+    @Param('etapaId') etapaId: string,
+    @Body() dto: SubmitChecklistDto,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.obraService.submitEtapaChecklist(obraId, etapaId, dto, user.id);
+  }
+
+  @Get(':id/materiais')
+  @ApiOperation({ summary: 'Listar materiais da obra' })
+  getMateriais(@Param('id') id: string) {
+    return this.obraService.getMateriais(id);
+  }
+
+  @Get(':id/relatorio')
+  @ApiOperation({ summary: 'Gerar relatorio para proprietario' })
+  getRelatorio(@Param('id') id: string) {
+    return this.obraService.getRelatorio(id);
   }
 }

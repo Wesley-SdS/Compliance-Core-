@@ -182,20 +182,34 @@ export const OBRA_DOC_CATEGORIES = [
   'alvara_construcao',
   'art_rrt',
   'licenca_ambiental',
-  'epi_registro',
-  'diario_obra',
   'seguro',
+  'nr_treinamento',
+  'diario_obra',
+  'epi_registro',
+  'pcmso_ppra',
+  'crea_registro',
+  'projeto_aprovado',
+  'habite_se',
   'nota_fiscal_material',
   'foto_obra',
   'laudo_vistoria',
-  'habite_se',
-];
+  'nr18',
+  'pcmso',
+  'ppra',
+  'outro',
+] as const;
+
+export type ObraDocCategory = typeof OBRA_DOC_CATEGORIES[number];
 
 export const OBRA_ALERT_TYPES = [
   'DOC_EXPIRY',
   'LICENSE_RENEWAL',
   'ART_RENEWAL',
+  'ALVARA_EXPIRY',
+  'INSURANCE_EXPIRY',
+  'NR_COMPLIANCE',
   'EPI_INSPECTION',
   'ETAPA_DEADLINE',
+  'TRAINING_RENEWAL',
   'VISTORIA_SCHEDULED',
-];
+] as const;

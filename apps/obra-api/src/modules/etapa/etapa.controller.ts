@@ -3,13 +3,13 @@ import {
   Param, Body, Query, UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
-import { ClerkAuthGuard, CurrentUser, AuthUser } from '@compliancecore/sdk';
+import { BetterAuthGuard, CurrentUser, AuthUser } from '@compliancecore/sdk';
 import { EtapaService } from './etapa.service';
 import { CreateEtapaDto, UpdateEtapaDto } from './etapa.dto';
 
 @ApiTags('etapas')
 @ApiBearerAuth()
-@UseGuards(ClerkAuthGuard)
+@UseGuards(BetterAuthGuard)
 @Controller('etapas')
 export class EtapaController {
   constructor(private readonly etapaService: EtapaService) {}

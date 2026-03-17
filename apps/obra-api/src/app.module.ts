@@ -1,48 +1,38 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { EventStoreModule } from '@compliancecore/sdk/event-store/event-store.module';
-import { ComplianceCoreConfigService } from '@compliancecore/sdk/shared/config';
-import { DatabaseService } from '@compliancecore/sdk/shared/database';
-import { ComplianceLogger } from '@compliancecore/sdk/shared/logger';
+import { BullModule } from '@nestjs/bull';
+import {
+  ComplianceCoreModule,
+  ComplianceCoreConfigService,
+} from '@compliancecore/sdk';
 import { ObraModule } from './modules/obra/obra.module';
 import { EtapaModule } from './modules/etapa/etapa.module';
 import { MaterialModule } from './modules/material/material.module';
+import { FotoModule } from './modules/foto/foto.module';
+import { WebhookModule } from './modules/webhook/webhook.module';
+import { AlertaModule } from './modules/alerta/alerta.module';
+import { JobsModule } from './modules/jobs/jobs.module';
+
+const config = ComplianceCoreConfigService.fromEnv();
 
 @Module({
   imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-      envFilePath: ['.env.local', '.env'],
+    ConfigModule.forRoot({ isGlobal: true, envFilePath: ['.env.local', '.env'] }),
+    ComplianceCoreModule.register(config),
+    BullModule.forRoot({
+      connection: {
+        host: config.redis?.host || 'localhost',
+        port: config.redis?.port || 6379,
+        password: config.redis?.password || undefined,
+      },
     }),
-    EventStoreModule,
     ObraModule,
     EtapaModule,
     MaterialModule,
+    FotoModule,
+    WebhookModule,
+    AlertaModule,
+    JobsModule,
   ],
-  providers: [
-    {
-      provide: ComplianceCoreConfigService,
-      useFactory: () => {
-        return new ComplianceCoreConfigService(
-          ComplianceCoreConfigService.fromEnv(),
-        );
-      },
-    },
-    {
-      provide: DatabaseService,
-      useFactory: (config: ComplianceCoreConfigService) => {
-        return new DatabaseService({
-          host: config.database.host,
-          port: config.database.port,
-          database: config.database.database,
-          user: config.database.user,
-          password: config.database.password,
-        });
-      },
-      inject: [ComplianceCoreConfigService],
-    },
-    ComplianceLogger,
-  ],
-  exports: [ComplianceCoreConfigService, DatabaseService, ComplianceLogger],
 })
 export class AppModule {}

@@ -1,14 +1,20 @@
 import { Module } from '@nestjs/common';
-import { EventStoreModule } from '@compliancecore/sdk/event-store/event-store.module';
-import { ScoreEngineModule } from '@compliancecore/sdk/score-engine/score-engine.module';
-import { VektusAdapterModule } from '@compliancecore/sdk/vektus/vektus-adapter.module';
 import { ObraController } from './obra.controller';
 import { ObraService } from './obra.service';
+import {
+  CriarObraUseCase,
+  RegistrarNotaFiscalUseCase,
+  ProcessarOCRCallbackUseCase,
+} from './use-cases';
 
 @Module({
-  imports: [EventStoreModule, ScoreEngineModule, VektusAdapterModule],
   controllers: [ObraController],
-  providers: [ObraService],
-  exports: [ObraService],
+  providers: [
+    ObraService,
+    CriarObraUseCase,
+    RegistrarNotaFiscalUseCase,
+    ProcessarOCRCallbackUseCase,
+  ],
+  exports: [ObraService, ProcessarOCRCallbackUseCase],
 })
 export class ObraModule {}

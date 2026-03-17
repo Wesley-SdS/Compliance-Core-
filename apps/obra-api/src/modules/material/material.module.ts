@@ -1,13 +1,11 @@
 import { Module } from '@nestjs/common';
-import { EventStoreModule } from '@compliancecore/sdk/event-store/event-store.module';
-import { VektusAdapterModule } from '@compliancecore/sdk/vektus/vektus-adapter.module';
 import { MaterialController } from './material.controller';
 import { MaterialService } from './material.service';
+import { TransferirMaterialUseCase } from '../obra/use-cases/transferir-material.use-case';
 
 @Module({
-  imports: [EventStoreModule, VektusAdapterModule],
   controllers: [MaterialController],
-  providers: [MaterialService],
+  providers: [MaterialService, TransferirMaterialUseCase],
   exports: [MaterialService],
 })
 export class MaterialModule {}

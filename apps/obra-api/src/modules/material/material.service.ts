@@ -1,12 +1,14 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { ulid } from 'ulid';
-import { EventStoreService } from '@compliancecore/sdk/event-store/event-store.service';
-import { VektusAdapterService } from '@compliancecore/sdk/vektus/vektus-adapter.service';
-import { DatabaseService } from '@compliancecore/sdk/shared/database';
-import { ComplianceLogger } from '@compliancecore/sdk/shared/logger';
-
+import {
+  EventStoreService,
+  VektusAdapterService,
+  DatabaseService,
+  ComplianceLogger,
+} from '@compliancecore/sdk';
 import { CreateMaterialDto, UpdateMaterialDto } from './material.dto';
-export { CreateMaterialDto, UpdateMaterialDto };
+import { TransferirMaterialDto } from '../obra/obra.dto';
+import { TransferirMaterialUseCase } from '../obra/use-cases/transferir-material.use-case';
 
 @Injectable()
 export class MaterialService {
@@ -15,6 +17,7 @@ export class MaterialService {
     private readonly eventStore: EventStoreService,
     private readonly vektus: VektusAdapterService,
     private readonly logger: ComplianceLogger,
+    private readonly transferirMaterialUseCase: TransferirMaterialUseCase,
   ) {
     this.logger.setContext('MaterialService');
   }
@@ -36,7 +39,10 @@ export class MaterialService {
   }
 
   async findByObra(obraId: string) {
-    return this.db.query(`SELECT * FROM materiais WHERE obra_id = $1 ORDER BY created_at DESC`, [obraId]);
+    return this.db.query(
+      `SELECT * FROM materiais WHERE obra_id = $1 AND (status IS NULL OR status != 'CANCELADO') ORDER BY created_at DESC`,
+      [obraId],
+    );
   }
 
   async findById(id: string) {
@@ -78,7 +84,10 @@ export class MaterialService {
 
   async delete(id: string, actorId: string) {
     const material = await this.findById(id);
-    await this.db.query(`DELETE FROM materiais WHERE id = $1`, [id]);
+    await this.db.query(
+      `UPDATE materiais SET status = 'CANCELADO', updated_at = NOW() WHERE id = $1`,
+      [id],
+    );
 
     await this.eventStore.append(material.obra_id, 'obra', 'MATERIAL_DELETED', { materialId: id }, {
       actorId, actorRole: 'admin', ip: '0.0.0.0', correlationId: ulid(),
@@ -115,5 +124,9 @@ export class MaterialService {
       filters: { vertical: 'obra', category: 'nota_fiscal_material' },
       topK: 10,
     });
+  }
+
+  async transferir(dto: TransferirMaterialDto, actorId: string) {
+    return this.transferirMaterialUseCase.execute(dto, actorId);
   }
 }

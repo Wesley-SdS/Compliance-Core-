@@ -3,13 +3,14 @@ import {
   Param, Body, Query, UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
-import { ClerkAuthGuard, CurrentUser, AuthUser } from '@compliancecore/sdk';
+import { BetterAuthGuard, CurrentUser, AuthUser } from '@compliancecore/sdk';
 import { MaterialService } from './material.service';
 import { CreateMaterialDto, UpdateMaterialDto } from './material.dto';
+import { TransferirMaterialDto } from '../obra/obra.dto';
 
 @ApiTags('materiais')
 @ApiBearerAuth()
-@UseGuards(ClerkAuthGuard)
+@UseGuards(BetterAuthGuard)
 @Controller('materiais')
 export class MaterialController {
   constructor(private readonly materialService: MaterialService) {}
@@ -62,5 +63,14 @@ export class MaterialController {
     @CurrentUser() user: AuthUser,
   ) {
     return this.materialService.ocrNotaFiscal(id, body.content, user.id);
+  }
+
+  @Post('transferir')
+  @ApiOperation({ summary: 'Transferir material entre obras' })
+  transferir(
+    @Body() dto: TransferirMaterialDto,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.materialService.transferir(dto, user.id);
   }
 }
