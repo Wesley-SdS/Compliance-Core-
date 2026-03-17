@@ -1,0 +1,34 @@
+{
+  "name": "@compliancecore/estetik-api",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "nest build",
+    "dev": "nest start --watch",
+    "start": "node dist/main",
+    "lint": "eslint src/",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@nestjs/common": "^11.0.0",
+    "@nestjs/core": "^11.0.0",
+    "@nestjs/platform-express": "^11.0.0",
+    "@nestjs/config": "^4.0.0",
+    "@nestjs/swagger": "^11.0.0",
+    "@nestjs/bullmq": "^11.0.0",
+    "bullmq": "^5.0.0",
+    "@compliancecore/sdk": "workspace:*",
+    "@compliancecore/shared": "workspace:*",
+    "reflect-metadata": "^0.2.0",
+    "rxjs": "^7.8.0",
+    "axios": "^1.7.0",
+    "cheerio": "^1.0.0",
+    "ulid": "^2.3.0"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "^11.0.0",
+    "@types/cheerio": "^0.22.35",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  }
+}
