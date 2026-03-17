@@ -1,63 +1,8 @@
+'use client';
+
 import Link from 'next/link';
-import { apiFetch } from '@/lib/api';
-
-interface Empresa {
-  id: string;
-  nome: string;
-  regime: string;
-  score: number;
-}
-
-interface Obrigacao {
-  id: string;
-  nome: string;
-  vencimento: string;
-  empresa: string;
-  status: string;
-}
-
-interface ReformAlert {
-  id: string;
-  message: string;
-  severity: string;
-}
-
-interface ScoreData {
-  value: number;
-  level: 'EXCELENTE' | 'BOM' | 'ATENCAO' | 'CRITICO';
-  trend: 'MELHORANDO' | 'PIORANDO' | 'ESTAVEL';
-}
-
-async function getDashboardData() {
-  const results = await Promise.allSettled([
-    apiFetch<ScoreData>('/empresas/score'),
-    apiFetch<Empresa[]>('/empresas'),
-    apiFetch<Obrigacao[]>('/obrigacoes'),
-    apiFetch<ReformAlert[]>('/alertas/reforma'),
-  ]);
-
-  const score = results[0].status === 'fulfilled' ? results[0].value : { value: 0, level: 'CRITICO' as const, trend: 'ESTAVEL' as const };
-  const empresas = results[1].status === 'fulfilled' ? results[1].value : [];
-  const obrigacoes = results[2].status === 'fulfilled' ? results[2].value : [];
-  const reformAlerts = results[3].status === 'fulfilled' ? results[3].value : [];
-
-  return { score, empresas, obrigacoes, reformAlerts };
-}
-
-function ScoreCard({ value, level, trend }: { value: number; level: string; trend: string }) {
-  const color = level === 'EXCELENTE' ? 'text-green-600' : level === 'BOM' ? 'text-blue-600' : level === 'ATENCAO' ? 'text-amber-600' : 'text-red-600';
-  const bgColor = level === 'EXCELENTE' ? 'bg-green-50' : level === 'BOM' ? 'bg-blue-50' : level === 'ATENCAO' ? 'bg-amber-50' : 'bg-red-50';
-  const trendArrow = trend === 'MELHORANDO' ? '\u2191' : trend === 'PIORANDO' ? '\u2193' : '\u2192';
-  const trendColor = trend === 'MELHORANDO' ? 'text-green-600' : trend === 'PIORANDO' ? 'text-red-600' : 'text-slate-500';
-
-  return (
-    <div className={`rounded-xl ${bgColor} p-6 flex flex-col items-center justify-center`}>
-      <div className={`text-5xl font-bold ${color}`}>{value}</div>
-      <div className={`text-sm font-medium ${color} mt-1`}>{level}</div>
-      <div className={`text-xs ${trendColor} mt-2 font-medium`}>{trendArrow} {trend.toLowerCase()}</div>
-    </div>
-  );
-}
+import { useGlobalScore, useEmpresas, useObrigacoes } from '@/hooks';
+import { scoreLevelColor, scoreLevelBg, formatDate } from '@/lib/utils';
 
 function StatusBadge({ status }: { status: string }) {
   const styles: Record<string, string> = {
@@ -72,55 +17,67 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-function SeverityDot({ severity }: { severity: string }) {
-  const color = severity === 'error' ? 'bg-red-500' : severity === 'warning' ? 'bg-amber-500' : 'bg-blue-500';
-  return <span className={`inline-block w-2 h-2 rounded-full ${color} flex-shrink-0 mt-1.5`} />;
-}
+export default function DashboardPage() {
+  const { data: score } = useGlobalScore();
+  const { data: empresas } = useEmpresas();
+  const { data: obrigacoes } = useObrigacoes();
 
-export default async function DashboardPage() {
-  const { score, empresas, obrigacoes, reformAlerts } = await getDashboardData();
+  const trendArrow = score?.trend === 'MELHORANDO' ? '\u2191' : score?.trend === 'PIORANDO' ? '\u2193' : '\u2192';
+  const trendColor = score?.trend === 'MELHORANDO' ? 'text-green-600' : score?.trend === 'PIORANDO' ? 'text-red-600' : 'text-slate-500';
+  const pendentes = obrigacoes?.filter((o) => o.status === 'pendente') ?? [];
+  const atrasadas = obrigacoes?.filter((o) => o.status === 'atrasado') ?? [];
 
   return (
     <div className="space-y-6">
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <ScoreCard value={score.value} level={score.level} trend={score.trend} />
+        <div className={`rounded-xl p-6 flex flex-col items-center justify-center border ${score ? scoreLevelBg(score.level) : 'bg-slate-50 border-slate-200'}`}>
+          <div className={`text-5xl font-bold ${score ? scoreLevelColor(score.level) : 'text-slate-400'}`}>
+            {score?.value ?? '--'}
+          </div>
+          <div className={`text-sm font-medium mt-1 ${score ? scoreLevelColor(score.level) : 'text-slate-400'}`}>
+            {score?.level ?? 'Carregando...'}
+          </div>
+          {score && (
+            <div className={`text-xs ${trendColor} mt-2 font-medium`}>
+              {trendArrow} {score.trend.toLowerCase()}
+            </div>
+          )}
+        </div>
 
         <div className="rounded-xl bg-white border border-slate-200 p-6">
           <div className="text-sm text-slate-500 font-medium">Empresas</div>
-          <div className="text-3xl font-bold text-slate-800 mt-2">{empresas.length}</div>
+          <div className="text-3xl font-bold text-slate-800 mt-2">{empresas?.length ?? '--'}</div>
           <div className="text-xs text-slate-400 mt-1">clientes ativos</div>
         </div>
 
         <div className="rounded-xl bg-white border border-slate-200 p-6">
           <div className="text-sm text-slate-500 font-medium">Obrigacoes Pendentes</div>
-          <div className="text-3xl font-bold text-amber-600 mt-2">
-            {obrigacoes.filter((o) => o.status === 'pendente').length}
-          </div>
+          <div className="text-3xl font-bold text-amber-600 mt-2">{pendentes.length}</div>
           <div className="text-xs text-slate-400 mt-1">este mes</div>
         </div>
 
         <div className="rounded-xl bg-white border border-slate-200 p-6">
-          <div className="text-sm text-slate-500 font-medium">Alertas Reforma</div>
-          <div className="text-3xl font-bold text-blue-600 mt-2">{reformAlerts.length}</div>
-          <div className="text-xs text-slate-400 mt-1">impactos identificados</div>
+          <div className="text-sm text-slate-500 font-medium">Atrasadas</div>
+          <div className="text-3xl font-bold text-red-600 mt-2">{atrasadas.length}</div>
+          <div className="text-xs text-slate-400 mt-1">requerem atencao</div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Calendario de Obrigacoes */}
+        {/* Proximas Obrigacoes */}
         <div className="rounded-xl bg-white border border-slate-200 p-6">
           <h2 className="text-base font-semibold text-slate-800 mb-4">Proximas Obrigacoes</h2>
-          {obrigacoes.length > 0 ? (
+          {obrigacoes && obrigacoes.length > 0 ? (
             <div className="space-y-3">
-              {obrigacoes.map((obr) => (
+              {obrigacoes.slice(0, 8).map((obr) => (
                 <div key={obr.id} className="flex items-center justify-between p-3 rounded-lg border border-slate-100">
                   <div>
                     <div className="text-sm font-medium text-slate-700">{obr.nome}</div>
-                    <div className="text-xs text-slate-500">{obr.empresa}</div>
+                    <div className="text-xs text-slate-500">{obr.empresa ?? obr.competencia}</div>
                   </div>
                   <div className="text-right flex items-center gap-3">
-                    <span className="text-xs text-slate-500">{obr.vencimento}</span>
+                    <span className="text-xs text-slate-500">{formatDate(obr.vencimento)}</span>
                     <StatusBadge status={obr.status} />
                   </div>
                 </div>
@@ -131,50 +88,54 @@ export default async function DashboardPage() {
           )}
         </div>
 
-        {/* Alertas de Reforma */}
+        {/* Empresas Recentes */}
         <div className="rounded-xl bg-white border border-slate-200 p-6">
-          <h2 className="text-base font-semibold text-slate-800 mb-4">Impacto da Reforma Tributaria</h2>
-          {reformAlerts.length > 0 ? (
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-base font-semibold text-slate-800">Empresas</h2>
+            <Link href="/empresas" className="text-sm text-emerald-600 hover:text-emerald-700 font-medium">
+              Ver todas
+            </Link>
+          </div>
+          {empresas && empresas.length > 0 ? (
             <div className="space-y-3">
-              {reformAlerts.map((alert) => (
-                <div key={alert.id} className="flex items-start gap-3">
-                  <SeverityDot severity={alert.severity} />
-                  <p className="text-sm text-slate-600">{alert.message}</p>
-                </div>
+              {empresas.slice(0, 6).map((empresa) => (
+                <Link
+                  key={empresa.id}
+                  href={`/empresas/${empresa.id}`}
+                  className="flex items-center justify-between p-3 rounded-lg border border-slate-100 hover:bg-slate-50 transition-colors"
+                >
+                  <div>
+                    <div className="text-sm font-medium text-slate-800">{empresa.razaoSocial}</div>
+                    <div className="text-xs text-slate-500">{empresa.regimeTributario.replace(/_/g, ' ')}</div>
+                  </div>
+                  <div className="text-right">
+                    <div className={`text-sm font-semibold ${empresa.score != null ? scoreLevelColor(empresa.level ?? 'BOM') : 'text-slate-400'}`}>
+                      {empresa.score ?? '--'}
+                    </div>
+                  </div>
+                </Link>
               ))}
             </div>
           ) : (
-            <p className="text-sm text-slate-500">Nenhum alerta de reforma.</p>
+            <p className="text-sm text-slate-500">Nenhuma empresa cadastrada.</p>
           )}
-          <Link href="/simulador" className="inline-block mt-4 text-sm text-emerald-600 hover:text-emerald-700 font-medium">
-            Abrir Simulador de Reforma
-          </Link>
         </div>
       </div>
 
-      {/* Empresas */}
-      <div className="rounded-xl bg-white border border-slate-200 p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-base font-semibold text-slate-800">Empresas Recentes</h2>
-          <Link href="/empresas" className="text-sm text-emerald-600 hover:text-emerald-700 font-medium">
-            Ver todas
-          </Link>
-        </div>
-        {empresas.length > 0 ? (
-          <div className="space-y-3">
-            {empresas.map((empresa) => (
-              <Link key={empresa.id} href={`/empresas/${empresa.id}`} className="flex items-center justify-between p-3 rounded-lg border border-slate-100 hover:bg-slate-50 transition-colors">
-                <div>
-                  <div className="text-sm font-medium text-slate-800">{empresa.nome}</div>
-                  <div className="text-xs text-slate-500">{empresa.regime}</div>
-                </div>
-                <div className="text-sm font-semibold text-slate-700">Score {empresa.score}</div>
-              </Link>
-            ))}
-          </div>
-        ) : (
-          <p className="text-sm text-slate-500">Nenhuma empresa cadastrada.</p>
-        )}
+      {/* Quick Actions */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Link href="/simulador" className="rounded-xl bg-emerald-50 border border-emerald-200 p-6 hover:bg-emerald-100 transition-colors group">
+          <div className="text-sm font-semibold text-emerald-800 group-hover:text-emerald-900">Simulador de Reforma</div>
+          <p className="text-xs text-emerald-600 mt-1">Compare CBS/IBS/IS com o regime atual</p>
+        </Link>
+        <Link href="/legislacao" className="rounded-xl bg-blue-50 border border-blue-200 p-6 hover:bg-blue-100 transition-colors group">
+          <div className="text-sm font-semibold text-blue-800 group-hover:text-blue-900">Legislacao</div>
+          <p className="text-xs text-blue-600 mt-1">Acompanhe as mudancas tributarias</p>
+        </Link>
+        <Link href="/sped" className="rounded-xl bg-violet-50 border border-violet-200 p-6 hover:bg-violet-100 transition-colors group">
+          <div className="text-sm font-semibold text-violet-800 group-hover:text-violet-900">SPED Import</div>
+          <p className="text-xs text-violet-600 mt-1">Importe e valide arquivos SPED</p>
+        </Link>
       </div>
     </div>
   );

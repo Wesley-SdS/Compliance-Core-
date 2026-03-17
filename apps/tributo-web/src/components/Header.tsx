@@ -10,6 +10,8 @@ const pageTitles: Record<string, string> = {
   '/certidoes': 'Certidoes',
   '/alertas': 'Alertas',
   '/relatorios': 'Relatorios',
+  '/legislacao': 'Legislacao Tributaria',
+  '/configuracoes': 'Configuracoes',
 };
 
 export function Header() {
