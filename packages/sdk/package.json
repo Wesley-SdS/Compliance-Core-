@@ -1,0 +1,30 @@
+{
+  "name": "@compliancecore/sdk",
+  "version": "0.1.0",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "lint": "eslint src/",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@nestjs/common": "^11.0.0",
+    "@nestjs/config": "^4.0.0",
+    "@nestjs/axios": "^4.0.0",
+    "@nestjs/bull": "^11.0.0",
+    "axios": "^1.7.0",
+    "bullmq": "^5.0.0",
+    "pg": "^8.13.0",
+    "ulid": "^2.3.0",
+    "pdfkit": "^0.16.0",
+    "@compliancecore/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0",
+    "@types/pg": "^8.11.0",
+    "@types/pdfkit": "^0.13.0"
+  }
+}
