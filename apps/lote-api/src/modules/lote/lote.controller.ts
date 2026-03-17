@@ -3,13 +3,13 @@ import {
   Param, Body, Query, UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
-import { ClerkAuthGuard, CurrentUser, AuthUser } from '@compliancecore/sdk';
+import { BetterAuthGuard, CurrentUser, AuthUser } from '@compliancecore/sdk';
 import { LoteService } from './lote.service';
 import { CreateLoteDto, UpdateLoteDto, SimularFinanciamentoDto } from './lote.dto';
 
 @ApiTags('lotes')
 @ApiBearerAuth()
-@UseGuards(ClerkAuthGuard)
+@UseGuards(BetterAuthGuard)
 @Controller('lotes')
 export class LoteController {
   constructor(private readonly loteService: LoteService) {}
