@@ -53,7 +53,7 @@ export class ComplianceCoreConfigService {
       const required: Record<string, string | undefined> = {
         DB_PASSWORD: process.env.DB_PASSWORD,
         VEKTUS_API_KEY: process.env.VEKTUS_API_KEY,
-        CLERK_SECRET_KEY: process.env.CLERK_SECRET_KEY,
+        BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET,
         VEKTUS_WEBHOOK_SECRET: process.env.VEKTUS_WEBHOOK_SECRET,
       };
 
@@ -70,7 +70,7 @@ export class ComplianceCoreConfigService {
       }
     } else {
       // Development warnings for optional vars
-      const optional = ['VEKTUS_API_KEY', 'CLERK_SECRET_KEY', 'VEKTUS_WEBHOOK_SECRET', 'R2_ENDPOINT', 'R2_ACCESS_KEY', 'R2_SECRET_KEY'];
+      const optional = ['VEKTUS_API_KEY', 'BETTER_AUTH_SECRET', 'VEKTUS_WEBHOOK_SECRET', 'R2_ENDPOINT', 'R2_ACCESS_KEY', 'R2_SECRET_KEY'];
       const missingOptional = optional.filter(key => !process.env[key]);
       if (missingOptional.length > 0) {
         console.warn(`[ComplianceCore] Missing optional env vars (dev mode): ${missingOptional.join(', ')}`);

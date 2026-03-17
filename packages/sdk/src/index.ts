@@ -37,12 +37,14 @@ export { ChecklistEngineService } from './checklists/checklist-engine.service.js
 export { ChecklistEngineModule } from './checklists/checklist-engine.module.js';
 
 // Auth
-export { ClerkAuthGuard } from './auth/clerk-auth.guard.js';
+export { BetterAuthGuard, BETTER_AUTH_INSTANCE } from './auth/better-auth.guard.js';
 export { RBACGuard, ROLES_KEY, Roles } from './auth/rbac.guard.js';
 export { VektusWebhookGuard } from './auth/vektus-webhook.guard.js';
 export { CurrentUser } from './auth/user.decorator.js';
 export type { AuthUser } from './auth/user.decorator.js';
 export { AuthModule } from './auth/auth.module.js';
+export { createBetterAuthInstance } from './auth/better-auth.config.js';
+export type { BetterAuthInstance, BetterAuthOptions, SendEmailFn, SendEmailParams } from './auth/better-auth.config.js';
 
 // Main Module
 export { ComplianceCoreModule } from './compliance-core.module.js';

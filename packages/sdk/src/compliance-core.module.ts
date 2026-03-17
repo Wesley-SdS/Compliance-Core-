@@ -10,9 +10,8 @@ import { AlertEngineService } from './alerts/alert-engine.service.js';
 import { EvidenceGeneratorService } from './evidence/evidence-generator.service.js';
 import { DocumentManagerService } from './documents/document-manager.service.js';
 import { ChecklistEngineService } from './checklists/checklist-engine.service.js';
-import { ClerkAuthGuard } from './auth/clerk-auth.guard.js';
-import { RBACGuard } from './auth/rbac.guard.js';
-import { VektusWebhookGuard } from './auth/vektus-webhook.guard.js';
+import { AuthModule } from './auth/auth.module.js';
+import { Pool } from 'pg';
 
 @Global()
 @Module({})
@@ -27,8 +26,19 @@ export class ComplianceCoreModule {
       password: config.database.password,
     });
 
+    const pool = new Pool({
+      host: config.database.host,
+      port: config.database.port,
+      database: config.database.database,
+      user: config.database.user,
+      password: config.database.password,
+    });
+
     return {
       module: ComplianceCoreModule,
+      imports: [
+        AuthModule.register({ pool }),
+      ],
       providers: [
         {
           provide: ComplianceCoreConfigService,
@@ -47,9 +57,6 @@ export class ComplianceCoreModule {
         EvidenceGeneratorService,
         DocumentManagerService,
         ChecklistEngineService,
-        ClerkAuthGuard,
-        RBACGuard,
-        VektusWebhookGuard,
       ],
       exports: [
         ComplianceCoreConfigService,
@@ -63,9 +70,6 @@ export class ComplianceCoreModule {
         EvidenceGeneratorService,
         DocumentManagerService,
         ChecklistEngineService,
-        ClerkAuthGuard,
-        RBACGuard,
-        VektusWebhookGuard,
       ],
     };
   }
