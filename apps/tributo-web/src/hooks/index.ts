@@ -9,3 +9,4 @@ export * from './use-documentos';
 export * from './use-timeline';
 export * from './use-alerts';
 export * from './use-checklist';
+export * from './use-dossier';

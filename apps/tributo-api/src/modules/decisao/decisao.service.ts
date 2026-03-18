@@ -1,9 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { ulid } from 'ulid';
 import { createHash } from 'crypto';
-import { EventStoreService } from '@compliancecore/sdk/event-store/event-store.service';
-import { DatabaseService } from '@compliancecore/sdk/shared/database';
-import { ComplianceLogger } from '@compliancecore/sdk/shared/logger';
+import { EventStoreService, DatabaseService, ComplianceLogger } from '@compliancecore/sdk';
 import { CreateDecisaoDto } from './decisao.dto';
 
 @Injectable()
@@ -25,7 +23,7 @@ export class DecisaoService {
     });
     const assinatura = createHash('sha256').update(payload).digest('hex');
 
-    await this.db.transaction(async (query) => {
+    await this.db.transaction(async (query: any) => {
       await query(
         `INSERT INTO decisoes_fiscais (id, empresa_id, descricao, fundamentacao_legal, simulacao_id, assinatura, created_by, created_at)
          VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())`,

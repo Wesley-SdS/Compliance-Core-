@@ -6,7 +6,7 @@ import { useParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useEmpresa, useEmpresaScore, useObrigacoes, useSimulacoes, useSimular, useSpedFiles, useDecisoes, useCreateDecisao, useDocumentos, useUploadDocumento, useTimeline, useAlerts, useChecklist } from '@/hooks';
+import { useEmpresa, useEmpresaScore, useObrigacoes, useSimulacoes, useSimular, useSpedFiles, useDecisoes, useCreateDecisao, useDocumentos, useUploadDocumento, useTimeline, useAlerts, useChecklist, useUpdateChecklist, useGenerateDossier } from '@/hooks';
 import { formatCurrency, formatPercent, formatCNPJ, formatDate, formatDateTime, scoreLevelColor, scoreLevelBg } from '@/lib/utils';
 import { ImpactoBarChart, ProjecaoLineChart, DistribuicaoChart } from '@/components/charts';
 import { ScoreGauge, AuditTimeline, DocumentUploader, DossierPreview, AlertBanner, ComplianceBadge, ChecklistForm } from '@compliancecore/ui';
@@ -74,7 +74,6 @@ export default function EmpresaDetailPage() {
 
   const [decisaoDesc, setDecisaoDesc] = useState('');
   const [decisaoFund, setDecisaoFund] = useState('');
-  const [generatingDossier, setGeneratingDossier] = useState(false);
 
   const { data: empresa, isLoading } = useEmpresa(id);
   const { data: score } = useEmpresaScore(id);
@@ -90,6 +89,8 @@ export default function EmpresaDetailPage() {
   const simular = useSimular();
   const createDecisao = useCreateDecisao();
   const uploadDocumento = useUploadDocumento();
+  const updateChecklist = useUpdateChecklist();
+  const generateDossier = useGenerateDossier();
 
   const {
     register,
@@ -638,7 +639,11 @@ export default function EmpresaDetailPage() {
             <ChecklistForm
               checklist={checklists[0]}
               onSubmit={(responses) => {
-                console.log('Checklist submitted:', responses);
+                updateChecklist.mutate({
+                  empresaId: id,
+                  checklistId: checklists[0].id,
+                  responses,
+                });
               }}
             />
           ) : (
@@ -658,10 +663,9 @@ export default function EmpresaDetailPage() {
             documentCount={documentos?.length ?? 0}
             eventCount={timeline?.length ?? 0}
             checklistCount={0}
-            generating={generatingDossier}
+            generating={generateDossier.isPending}
             onGenerate={() => {
-              setGeneratingDossier(true);
-              setTimeout(() => setGeneratingDossier(false), 2000);
+              generateDossier.mutate(id);
             }}
           />
         </div>

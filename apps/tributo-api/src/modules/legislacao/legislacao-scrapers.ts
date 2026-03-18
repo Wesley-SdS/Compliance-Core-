@@ -1,6 +1,5 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
-import { LegislationMonitorService } from '@compliancecore/sdk/legislation/legislation-monitor.service';
-import { ComplianceLogger } from '@compliancecore/sdk/shared/logger';
+import { LegislationMonitorService, ComplianceLogger } from '@compliancecore/sdk';
 
 /**
  * Registra fontes de legislação tributária no LegislationMonitorService do SDK.

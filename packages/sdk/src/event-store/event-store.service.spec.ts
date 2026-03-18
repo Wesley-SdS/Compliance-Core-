@@ -38,7 +38,7 @@ describe('EventStoreService', () => {
           eventVersion: 3,
           payload: {},
           metadata: {},
-          vertical: 'ESTETIK',
+          vertical: 'estetik',
           createdAt: new Date(),
         });
 
@@ -68,7 +68,7 @@ describe('EventStoreService', () => {
           eventVersion: 1,
           payload: { name: 'Test' },
           metadata: { actorId: 'user-2', correlationId: 'corr-2' },
-          vertical: 'ESTETIK',
+          vertical: 'estetik',
           createdAt: new Date(),
         });
 
@@ -141,7 +141,7 @@ describe('EventStoreService', () => {
       await service.getAuditTrail({
         eventType: 'CREATED',
         actorId: 'user-1',
-        vertical: 'ESTETIK',
+        vertical: 'estetik',
         since,
         until,
         page: 1,

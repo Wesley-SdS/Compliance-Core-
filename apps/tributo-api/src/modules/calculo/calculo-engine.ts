@@ -14,7 +14,7 @@ export interface OperacaoFiscal {
   nbs?: string;
   descricao: string;
   valor: number;
-  tipo: 'PRODUTO' | 'SERVICO' | 'IMPORTACAO';
+  tipo: 'PRODUTO' | 'SERVICO' | 'SERVICO_INTELECTUAL' | 'IMPORTACAO';
   icms?: number;
   aliquotaIcms?: number;
 }
@@ -102,6 +102,7 @@ export class CalculoEngine {
     regimeTributario?: string;
     faturamentoAnual?: number;
     ano?: number;
+    percentualCreditos?: number;
   }) {
     const ano = params.ano ?? 2033;
     const transicao = this.TRANSICAO[ano] ?? this.TRANSICAO[2033];
@@ -124,11 +125,17 @@ export class CalculoEngine {
     let impostoRegimeAtual: number | null = null;
     if (params.regimeTributario) {
       const faturamentoAnual = params.faturamentoAnual ?? params.faturamentoBruto * 12;
+      const tipoOp = params.tipoOperacao === 'PRESTACAO_SERVICO'
+        ? 'SERVICO'
+        : params.tipoOperacao === 'PRESTACAO_SERVICO_INTELECTUAL'
+          ? 'SERVICO_INTELECTUAL'
+          : 'PRODUTO';
       impostoRegimeAtual = this.calcularRegimeAtual(
         params.faturamentoBruto,
-        params.tipoOperacao === 'PRESTACAO_SERVICO' ? 'SERVICO' : 'PRODUTO',
+        tipoOp,
         params.regimeTributario,
         faturamentoAnual,
+        params.percentualCreditos,
       );
     }
 
@@ -159,6 +166,7 @@ export class CalculoEngine {
     ano: number;
     aliquotaCbsCustom?: number;
     aliquotaIbsCustom?: number;
+    percentualCreditos?: number;
   }): ResultadoSimulacao {
     const { operacoes, regimeTributario, faturamentoAnual, ano } = params;
     const transicao = this.TRANSICAO[ano] ?? this.TRANSICAO[2033];
@@ -167,8 +175,8 @@ export class CalculoEngine {
     const ibsBase = (params.aliquotaIbsCustom ?? this.IBS_REF) * transicao.ibsFator;
 
     const resultadosPorOperacao = operacoes.map(op => {
-      const tipoOp = op.tipo === 'SERVICO' ? 'SERVICO' : 'PRODUTO';
-      const impostoAtual = this.calcularRegimeAtual(op.valor, tipoOp, regimeTributario, faturamentoAnual);
+      const tipoOp = op.tipo === 'SERVICO_INTELECTUAL' ? 'SERVICO_INTELECTUAL' : op.tipo === 'SERVICO' ? 'SERVICO' : 'PRODUTO';
+      const impostoAtual = this.calcularRegimeAtual(op.valor, tipoOp, regimeTributario, faturamentoAnual, params.percentualCreditos);
 
       const reducao = this.getReducaoNCM(op.ncm);
       const cbsEfetiva = cbsBase * (1 - reducao);
@@ -240,11 +248,16 @@ export class CalculoEngine {
     tipoOperacao: string;
     regimeTributario: string;
     faturamentoAnual?: number;
+    percentualCreditos?: number;
   }): ProjecaoAnual[] {
     const faturamentoAnual = params.faturamentoAnual ?? params.faturamentoBruto * 12;
-    const tipoOp = params.tipoOperacao === 'PRESTACAO_SERVICO' ? 'SERVICO' : 'PRODUTO';
+    const tipoOp = params.tipoOperacao === 'PRESTACAO_SERVICO'
+      ? 'SERVICO'
+      : params.tipoOperacao === 'PRESTACAO_SERVICO_INTELECTUAL'
+        ? 'SERVICO_INTELECTUAL'
+        : 'PRODUTO';
     const impostoAtual = this.calcularRegimeAtual(
-      params.faturamentoBruto, tipoOp, params.regimeTributario, faturamentoAnual,
+      params.faturamentoBruto, tipoOp, params.regimeTributario, faturamentoAnual, params.percentualCreditos,
     );
 
     return Object.entries(this.TRANSICAO).map(([anoStr, transicao]) => {
@@ -270,17 +283,18 @@ export class CalculoEngine {
     tipo: string,
     regime: string,
     faturamentoAnual: number,
+    percentualCreditos?: number,
   ): number {
     switch (regime) {
       case 'SIMPLES_NACIONAL':
       case 'SIMPLES':
-        return this.calcularSimplesFaixa(valor, faturamentoAnual);
+        return this.calcularSimplesFaixa(valor, tipo, faturamentoAnual);
       case 'LUCRO_PRESUMIDO':
       case 'PRESUMIDO':
         return this.calcularPresumido(valor, tipo);
       case 'LUCRO_REAL':
       case 'REAL':
-        return this.calcularReal(valor, tipo);
+        return this.calcularReal(valor, tipo, percentualCreditos);
       case 'MEI':
         return valor * 0.05; // DAS fixo ~5% sobre faturamento
       default:
@@ -288,7 +302,27 @@ export class CalculoEngine {
     }
   }
 
-  private calcularSimplesFaixa(valor: number, faturamentoAnual: number): number {
+  private calcularSimplesFaixa(valor: number, tipo: string, faturamentoAnual: number): number {
+    if (tipo === 'SERVICO_INTELECTUAL') {
+      // Tabela Simples Nacional Anexo V — Serviços intelectuais (LC 123/2006)
+      if (faturamentoAnual <= 180000) return valor * 0.155;
+      if (faturamentoAnual <= 360000) return valor * 0.18;
+      if (faturamentoAnual <= 720000) return valor * 0.195;
+      if (faturamentoAnual <= 1800000) return valor * 0.205;
+      if (faturamentoAnual <= 3600000) return valor * 0.23;
+      return valor * 0.305;
+    }
+
+    if (tipo === 'SERVICO') {
+      // Tabela Simples Nacional Anexo III — Serviços em geral (LC 123/2006)
+      if (faturamentoAnual <= 180000) return valor * 0.06;
+      if (faturamentoAnual <= 360000) return valor * 0.112;
+      if (faturamentoAnual <= 720000) return valor * 0.135;
+      if (faturamentoAnual <= 1800000) return valor * 0.16;
+      if (faturamentoAnual <= 3600000) return valor * 0.21;
+      return valor * 0.33;
+    }
+
     // Tabela Simples Nacional Anexo I — Comércio (LC 123/2006)
     if (faturamentoAnual <= 180000) return valor * 0.04;
     if (faturamentoAnual <= 360000) return valor * 0.073;
@@ -301,14 +335,17 @@ export class CalculoEngine {
   private calcularPresumido(valor: number, tipo: string): number {
     // PIS 0.65% + COFINS 3% + ICMS ~18% ou ISS ~5%
     const pisCofins = valor * 0.0365;
-    const icmsOuIss = tipo === 'SERVICO' ? valor * 0.05 : valor * 0.18;
+    const icmsOuIss = tipo === 'SERVICO' || tipo === 'SERVICO_INTELECTUAL' ? valor * 0.05 : valor * 0.18;
     return pisCofins + icmsOuIss;
   }
 
-  private calcularReal(valor: number, tipo: string): number {
-    // PIS 1.65% + COFINS 7.6% (não-cumulativo, sem descontar créditos) + ICMS ~18% ou ISS ~5%
-    const pisCofins = valor * 0.0925;
-    const icmsOuIss = tipo === 'SERVICO' ? valor * 0.05 : valor * 0.18;
+  private calcularReal(valor: number, tipo: string, percentualCreditos?: number): number {
+    // PIS 1.65% + COFINS 7.6% (não-cumulativo) + ICMS ~18% ou ISS ~5%
+    const creditos = percentualCreditos ?? 0;
+    const pis = valor * 0.0165 * (1 - creditos);
+    const cofins = valor * 0.076 * (1 - creditos);
+    const pisCofins = pis + cofins;
+    const icmsOuIss = tipo === 'SERVICO' || tipo === 'SERVICO_INTELECTUAL' ? valor * 0.05 : valor * 0.18;
     return pisCofins + icmsOuIss;
   }
 

@@ -98,6 +98,16 @@ export class EmpresaController {
     return this.empresaService.getChecklist(id);
   }
 
+  @Put(':id/checklist')
+  @ApiOperation({ summary: 'Submeter respostas do checklist de compliance' })
+  updateChecklist(
+    @Param('id') id: string,
+    @Body() body: { checklistId: string; responses: { itemId: string; answer: string; notes?: string; evidenceIds?: string[] }[] },
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.empresaService.updateChecklist(id, body.checklistId, body.responses, user.id);
+  }
+
   @Get(':id/relatorio')
   @ApiOperation({ summary: 'Gerar relatorio PDF de compliance da empresa' })
   @ApiProduces('application/pdf')

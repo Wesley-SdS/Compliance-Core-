@@ -1,8 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { ulid } from 'ulid';
-import { EventStoreService } from '@compliancecore/sdk/event-store/event-store.service';
-import { DatabaseService } from '@compliancecore/sdk/shared/database';
-import { ComplianceLogger } from '@compliancecore/sdk/shared/logger';
+import { EventStoreService, DatabaseService, ComplianceLogger } from '@compliancecore/sdk';
 
 import { SimularCalculoDto } from './calculo.dto';
 import { CalculoEngine } from './calculo-engine';
@@ -74,7 +72,7 @@ export class CalculoService {
       simuladoEm: new Date(),
     };
 
-    await this.db.transaction(async (query) => {
+    await this.db.transaction(async (query: any) => {
       await query(
         `INSERT INTO calculos_tributarios (id, empresa_id, faturamento_bruto, cbs, ibs, imposto_seletivo,
           total_tributos, carga_tributaria_efetiva, creditos_aproveitados, valor_liquido, competencia,

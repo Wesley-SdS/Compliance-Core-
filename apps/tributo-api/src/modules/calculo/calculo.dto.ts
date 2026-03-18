@@ -4,6 +4,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 export enum TipoOperacao {
   VENDA_MERCADORIA = 'VENDA_MERCADORIA',
   PRESTACAO_SERVICO = 'PRESTACAO_SERVICO',
+  PRESTACAO_SERVICO_INTELECTUAL = 'PRESTACAO_SERVICO_INTELECTUAL',
   IMPORTACAO = 'IMPORTACAO',
 }
 
@@ -51,6 +52,12 @@ export class SimularCalculoDto {
   @IsNumber()
   @Min(0)
   creditosCofins?: number;
+
+  @ApiPropertyOptional({ description: 'Percentual de creditos PIS/COFINS para Lucro Real (0 a 1, ex: 0.30 = 30%)' })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  percentualCreditos?: number;
 
   @ApiProperty({ description: 'Competencia (ex: 2025-01)' })
   @IsString()

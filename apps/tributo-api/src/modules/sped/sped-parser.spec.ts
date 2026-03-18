@@ -6,6 +6,8 @@ describe('SpedParser', () => {
 
   const SPED_SAMPLE = [
     '|0000|017|0|01012025|31012025|EMPRESA TESTE LTDA|12345678000190||SP|123456789|3550308|||A|1|',
+    '|0200|PROD001|PRODUTO TESTE A|7891234567890||UN|00|84713012||||18,00|',
+    '|0200|PROD002|PRODUTO TESTE B|7891234567891||UN|00|61051000||||12,00|',
     '|C100|0|0|FORN001|55|00|001|000001|12345678901234567890123456789012345678901234|01012025|01012025|15000,00|0|500,00|0|14500,00|0|200,00|50,00|100,00|14500,00|2610,00|0|0|300,00|247,50|1140,00|0|0|',
     '|C100|1|0|CLI001|55|00|001|000002|98765432109876543210987654321098765432109876|15012025|15012025|25000,00|0|0|0|25000,00|1|0|0|0|25000,00|4500,00|0|0|0|412,50|1900,00|0|0|',
     '|C170|001|PROD001|PRODUTO TESTE A|10|UN|5000,00|0|0|000|5102|001|5000,00|18,00|900,00|0|0|0|0|50||0|0|0|01|5000,00|1,65|82,50|01|5000,00|7,60|380,00|CONTA001|',
@@ -48,6 +50,24 @@ describe('SpedParser', () => {
       expect(result.itensNF[0].vlCofins).toBe(380);
     });
 
+    it('resolve NCM de C170 via registro 0200', () => {
+      const result = parser.parse(SPED_SAMPLE);
+
+      expect(result.itensNF).toHaveLength(1);
+      expect(result.itensNF[0].ncm).toBe('84713012');
+    });
+
+    it('NCM fica undefined quando item nao tem registro 0200', () => {
+      const semRegistro0200 = [
+        '|0000|017|0|01012025|31012025|EMPRESA||||||||||',
+        '|C170|001|ITEM_SEM_0200|DESC|1|UN|100,00|0|0|000|5102|001|100,00|18,00|18,00|0|0|0|0|50||0|0|0|01|100,00|1,65|1,65|01|100,00|7,60|7,60|CONTA|',
+      ].join('\n');
+      const result = parser.parse(semRegistro0200);
+
+      expect(result.itensNF).toHaveLength(1);
+      expect(result.itensNF[0].ncm).toBeUndefined();
+    });
+
     it('parseia registros D100 (transporte)', () => {
       const result = parser.parse(SPED_SAMPLE);
 
@@ -80,7 +100,7 @@ describe('SpedParser', () => {
 
     it('conta total de registros', () => {
       const result = parser.parse(SPED_SAMPLE);
-      expect(result.totalRegistros).toBe(7);
+      expect(result.totalRegistros).toBe(9);
     });
   });
 

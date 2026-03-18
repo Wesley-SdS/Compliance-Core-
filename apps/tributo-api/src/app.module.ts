@@ -8,6 +8,7 @@ import { DecisaoModule } from './modules/decisao/decisao.module';
 import { ObrigacaoModule } from './modules/obrigacao/obrigacao.module';
 import { LegislacaoModule } from './modules/legislacao/legislacao.module';
 import { OtimizadorModule } from './modules/otimizador/otimizador.module';
+import { WebhookModule } from './modules/webhook/webhook.module';
 
 @Module({
   imports: [
@@ -28,12 +29,17 @@ import { OtimizadorModule } from './modules/otimizador/otimizador.module';
         port: parseInt(process.env.REDIS_PORT ?? '6379', 10),
       },
       vektus: {
-        apiUrl: process.env.VEKTUS_API_URL ?? 'http://localhost:3100',
+        baseUrl: process.env.VEKTUS_API_URL ?? 'http://localhost:3100',
         apiKey: process.env.VEKTUS_API_KEY ?? '',
+        webhookSecret: process.env.VEKTUS_WEBHOOK_SECRET ?? '',
+        projectId: process.env.VEKTUS_PROJECT_ID ?? 'tributo',
       },
       storage: {
-        provider: (process.env.STORAGE_PROVIDER as 'local' | 's3') ?? 'local',
-        basePath: process.env.STORAGE_BASE_PATH ?? './uploads',
+        endpoint: process.env.STORAGE_ENDPOINT ?? 'http://localhost:9000',
+        accessKey: process.env.STORAGE_ACCESS_KEY ?? 'minioadmin',
+        secretKey: process.env.STORAGE_SECRET_KEY ?? 'minioadmin',
+        bucket: process.env.STORAGE_BUCKET ?? 'compliancecore',
+        publicUrl: process.env.STORAGE_PUBLIC_URL ?? 'http://localhost:9000/compliancecore',
       },
       vertical: 'tributo',
       selfUrl: process.env.SELF_URL ?? 'http://localhost:3003',
@@ -45,6 +51,7 @@ import { OtimizadorModule } from './modules/otimizador/otimizador.module';
     ObrigacaoModule,
     LegislacaoModule,
     OtimizadorModule,
+    WebhookModule,
   ],
 })
 export class AppModule {}

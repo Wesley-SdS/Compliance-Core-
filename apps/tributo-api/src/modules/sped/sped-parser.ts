@@ -23,6 +23,21 @@ export interface SpedRegistro0000 {
   indAtiv: string;
 }
 
+export interface SpedRegistro0200 {
+  reg: '0200';
+  codItem: string;
+  descrItem: string;
+  codBarra: string;
+  codAntItem: string;
+  unidInv: string;
+  tipoItem: string;
+  codNcm: string;
+  exIpi: string;
+  codGen: string;
+  codLst: string;
+  aliqIcms: number;
+}
+
 export interface SpedRegistroC100 {
   reg: 'C100';
   indOper: string; // 0=Entrada, 1=Saída
@@ -171,6 +186,9 @@ export class SpedParser {
     const text = this.decodeContent(content);
     const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
 
+    // Mapa de COD_ITEM -> NCM (vindo do registro 0200)
+    const itemNcmMap = new Map<string, string>();
+
     const result: SpedParseResult = {
       abertura: null,
       notasFiscais: [],
@@ -211,6 +229,13 @@ export class SpedParser {
             result.resumo.cnpj = result.abertura.cnpj;
             result.resumo.razaoSocial = result.abertura.nome;
             break;
+          case '0200': {
+            const reg0200 = this.parse0200(campos);
+            if (reg0200.codItem && reg0200.codNcm) {
+              itemNcmMap.set(reg0200.codItem, reg0200.codNcm);
+            }
+            break;
+          }
           case 'C100':
             const nf = this.parseC100(campos);
             result.notasFiscais.push(nf);
@@ -224,9 +249,15 @@ export class SpedParser {
             result.resumo.cofinsTotal += nf.vlCofins;
             result.resumo.ipiTotal += nf.vlIpi;
             break;
-          case 'C170':
-            result.itensNF.push(this.parseC170(campos));
+          case 'C170': {
+            const item = this.parseC170(campos);
+            const ncm = itemNcmMap.get(item.codItem);
+            if (ncm) {
+              item.ncm = ncm;
+            }
+            result.itensNF.push(item);
             break;
+          }
           case 'D100':
             result.transportes.push(this.parseD100(campos));
             break;
@@ -291,6 +322,23 @@ export class SpedParser {
       suframa: this.str(campos, 13),
       indPerfil: this.str(campos, 14),
       indAtiv: this.str(campos, 15),
+    };
+  }
+
+  private parse0200(campos: string[]): SpedRegistro0200 {
+    return {
+      reg: '0200',
+      codItem: this.str(campos, 2),
+      descrItem: this.str(campos, 3),
+      codBarra: this.str(campos, 4),
+      codAntItem: this.str(campos, 5),
+      unidInv: this.str(campos, 6),
+      tipoItem: this.str(campos, 7),
+      codNcm: this.str(campos, 8),
+      exIpi: this.str(campos, 9),
+      codGen: this.str(campos, 10),
+      codLst: this.str(campos, 11),
+      aliqIcms: this.num(campos, 12),
     };
   }
 
@@ -376,17 +424,17 @@ export class SpedParser {
       codSit: this.str(campos, 6),
       ser: this.str(campos, 7),
       numDoc: this.str(campos, 8),
-      dtDoc: this.str(campos, 10),
-      dtAP: this.str(campos, 11),
-      vlDoc: this.num(campos, 12),
-      vlDesc: this.num(campos, 13),
-      indFrt: this.str(campos, 14),
-      vlServ: this.num(campos, 15),
-      vlBcIcms: this.num(campos, 16),
-      vlIcms: this.num(campos, 17),
-      vlNt: this.num(campos, 18),
-      codInf: this.str(campos, 19),
-      codCta: this.str(campos, 20),
+      dtDoc: this.str(campos, 9),
+      dtAP: this.str(campos, 10),
+      vlDoc: this.num(campos, 11),
+      vlDesc: this.num(campos, 12),
+      indFrt: this.str(campos, 13),
+      vlServ: this.num(campos, 14),
+      vlBcIcms: this.num(campos, 15),
+      vlIcms: this.num(campos, 16),
+      vlNt: this.num(campos, 17),
+      codInf: this.str(campos, 18),
+      codCta: this.str(campos, 19),
     };
   }
 
@@ -400,19 +448,19 @@ export class SpedParser {
       codSit: this.str(campos, 6),
       ser: this.str(campos, 7),
       numDoc: this.str(campos, 8),
-      dtDoc: this.str(campos, 10),
-      dtAP: this.str(campos, 11),
-      vlDoc: this.num(campos, 12),
-      vlDesc: this.num(campos, 13),
-      vlServ: this.num(campos, 14),
-      vlServNt: this.num(campos, 15),
-      vlTerc: this.num(campos, 16),
-      vlDa: this.num(campos, 17),
-      vlBcIcms: this.num(campos, 18),
-      vlIcms: this.num(campos, 19),
-      codInf: this.str(campos, 20),
-      vlPis: this.num(campos, 21),
-      vlCofins: this.num(campos, 22),
+      dtDoc: this.str(campos, 9),
+      dtAP: this.str(campos, 10),
+      vlDoc: this.num(campos, 11),
+      vlDesc: this.num(campos, 12),
+      vlServ: this.num(campos, 13),
+      vlServNt: this.num(campos, 14),
+      vlTerc: this.num(campos, 15),
+      vlDa: this.num(campos, 16),
+      vlBcIcms: this.num(campos, 17),
+      vlIcms: this.num(campos, 18),
+      codInf: this.str(campos, 19),
+      vlPis: this.num(campos, 20),
+      vlCofins: this.num(campos, 21),
     };
   }
 

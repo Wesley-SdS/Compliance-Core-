@@ -1,9 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { ulid } from 'ulid';
-import { EventStoreService } from '@compliancecore/sdk/event-store/event-store.service';
-import { VektusAdapterService } from '@compliancecore/sdk/vektus/vektus-adapter.service';
-import { DatabaseService } from '@compliancecore/sdk/shared/database';
-import { ComplianceLogger } from '@compliancecore/sdk/shared/logger';
+import { EventStoreService, VektusAdapterService, DatabaseService, ComplianceLogger } from '@compliancecore/sdk';
 
 import { UploadSpedDto } from './sped.dto';
 import { SpedParser, SpedParseResult } from './sped-parser';
@@ -44,7 +41,7 @@ export class SpedService {
       tags: ['sped', dto.tipoSped, dto.empresaId],
     });
 
-    await this.db.transaction(async (query) => {
+    await this.db.transaction(async (query: any) => {
       await query(
         `INSERT INTO sped_files (id, empresa_id, tipo_sped, competencia, file_name, file_key,
           vektus_file_id, status, total_registros, total_notas, valor_entradas, valor_saidas,
@@ -133,7 +130,11 @@ export class SpedService {
 
   async delete(id: string, actorId: string) {
     const sped = await this.findById(id);
-    await this.db.query(`DELETE FROM sped_files WHERE id = $1`, [id]);
+
+    await this.db.transaction(async (query: any) => {
+      await query(`DELETE FROM sped_notas WHERE sped_file_id = $1`, [id]);
+      await query(`DELETE FROM sped_files WHERE id = $1`, [id]);
+    });
 
     await this.eventStore.append(sped.empresa_id, 'empresa', 'SPED_DELETED', { spedId: id }, {
       actorId, actorRole: 'contador', ip: '0.0.0.0', correlationId: ulid(),
