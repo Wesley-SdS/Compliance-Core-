@@ -1,168 +1,164 @@
+'use client';
+
 import Link from 'next/link';
-import { apiFetch } from '@/lib/api';
+import { useGlobalScore, useGlobalStats, useLoteamentos, useGlobalScoreHistory } from '@/hooks/use-api';
+import { ScoreGauge, AlertBanner, AuditTimeline } from '@compliancecore/ui';
+import { formatCurrency, formatPercent } from '@/lib/format';
+import {
+  BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
+  XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend,
+} from 'recharts';
 
-interface Loteamento {
-  id: string;
-  nome: string;
-  lotes: number;
-  vendidos: number;
-  score: number;
-}
+const PIE_COLORS = ['#10b981', '#f59e0b', '#f43f5e', '#3b82f6'];
 
-interface Pipeline { prospeccao: number; reserva: number; contrato: number; escritura: number; }
+export default function DashboardPage() {
+  const { data: score, isLoading: scoreLoading } = useGlobalScore();
+  const { data: stats, isLoading: statsLoading } = useGlobalStats();
+  const { data: loteamentosData } = useLoteamentos(1, 10);
+  const { data: historyData } = useGlobalScoreHistory();
 
-interface DimobAlert {
-  id: string;
-  message: string;
-  severity: string;
-}
+  const loteamentos = loteamentosData?.data ?? [];
 
-interface ScoreData {
-  value: number;
-  level: 'EXCELENTE' | 'BOM' | 'ATENCAO' | 'CRITICO';
-  trend: 'MELHORANDO' | 'PIORANDO' | 'ESTAVEL';
-}
+  const scoreValue = score?.score ?? 0;
+  const scoreLevel = score?.level ?? 'CRITICO';
+  const scoreTrend = score?.trend ?? 'ESTAVEL';
 
-async function getDashboardData() {
-  const results = await Promise.allSettled([
-    apiFetch<ScoreData>('/loteamentos/score'),
-    apiFetch<Loteamento[]>('/loteamentos'),
-    apiFetch<Pipeline>('/pipeline'),
-    apiFetch<DimobAlert[]>('/alertas/dimob'),
-  ]);
-
-  const score = results[0].status === 'fulfilled' ? results[0].value : { value: 0, level: 'CRITICO' as const, trend: 'ESTAVEL' as const };
-  const loteamentos = results[1].status === 'fulfilled' ? results[1].value : [];
-  const pipeline = results[2].status === 'fulfilled' ? results[2].value : { prospeccao: 0, reserva: 0, contrato: 0, escritura: 0 };
-  const dimobAlerts = results[3].status === 'fulfilled' ? results[3].value : [];
-
-  return { score, loteamentos, pipeline, dimobAlerts };
-}
-
-function ScoreCard({ value, level, trend }: { value: number; level: string; trend: string }) {
-  const color = level === 'EXCELENTE' ? 'text-green-600' : level === 'BOM' ? 'text-blue-600' : level === 'ATENCAO' ? 'text-amber-600' : 'text-red-600';
-  const bgColor = level === 'EXCELENTE' ? 'bg-green-50' : level === 'BOM' ? 'bg-blue-50' : level === 'ATENCAO' ? 'bg-amber-50' : 'bg-red-50';
-  const trendArrow = trend === 'MELHORANDO' ? '\u2191' : trend === 'PIORANDO' ? '\u2193' : '\u2192';
-  const trendColor = trend === 'MELHORANDO' ? 'text-green-600' : trend === 'PIORANDO' ? 'text-red-600' : 'text-slate-500';
-
-  return (
-    <div className={`rounded-xl ${bgColor} p-6 flex flex-col items-center justify-center`}>
-      <div className={`text-5xl font-bold ${color}`}>{value}</div>
-      <div className={`text-sm font-medium ${color} mt-1`}>{level}</div>
-      <div className={`text-xs ${trendColor} mt-2 font-medium`}>{trendArrow} {trend.toLowerCase()}</div>
-    </div>
-  );
-}
-
-function SeverityDot({ severity }: { severity: string }) {
-  const color = severity === 'error' ? 'bg-red-500' : severity === 'warning' ? 'bg-amber-500' : 'bg-blue-500';
-  return <span className={`inline-block w-2 h-2 rounded-full ${color} flex-shrink-0 mt-1.5`} />;
-}
-
-export default async function DashboardPage() {
-  const { score, loteamentos, pipeline, dimobAlerts } = await getDashboardData();
-  const totalLotes = loteamentos.reduce((sum, l) => sum + l.lotes, 0);
+  const pieData = [
+    { name: 'Disponível', value: stats?.lotes_disponiveis ?? 0 },
+    { name: 'Reservado', value: 0 },
+    { name: 'Vendido', value: stats?.lotes_vendidos ?? 0 },
+    { name: 'Quitado', value: 0 },
+  ].filter(d => d.value > 0);
 
   return (
     <div className="space-y-6">
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <ScoreCard value={score.value} level={score.level} trend={score.trend} />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="bg-white rounded-xl border border-slate-200 p-6 flex flex-col items-center justify-center">
+          {scoreLoading ? (
+            <div className="w-20 h-20 rounded-full bg-slate-100 animate-pulse" />
+          ) : (
+            <ScoreGauge score={scoreValue} level={scoreLevel as any} size={80} trend={scoreTrend as any} />
+          )}
+          <div className="text-xs text-slate-500 mt-2">Score Compliance</div>
+        </div>
 
-        <div className="rounded-xl bg-white border border-slate-200 p-6">
+        <div className="bg-white rounded-xl border border-slate-200 p-6">
           <div className="text-sm text-slate-500 font-medium">Loteamentos</div>
-          <div className="text-3xl font-bold text-slate-800 mt-2">{loteamentos.length}</div>
-          <div className="text-xs text-slate-400 mt-1">{totalLotes} lotes totais</div>
+          <div className="text-3xl font-bold text-slate-800 mt-2">
+            {statsLoading ? '—' : stats?.loteamentos_ativos ?? 0}
+          </div>
+          <div className="text-xs text-slate-400 mt-1">ativos</div>
         </div>
 
-        <div className="rounded-xl bg-white border border-slate-200 p-6">
-          <div className="text-sm text-slate-500 font-medium">Pipeline de Vendas</div>
+        <div className="bg-white rounded-xl border border-slate-200 p-6">
+          <div className="text-sm text-slate-500 font-medium">Lotes Totais</div>
+          <div className="text-3xl font-bold text-slate-800 mt-2">
+            {statsLoading ? '—' : stats?.lotes_total ?? 0}
+          </div>
+          <div className="text-xs text-slate-400 mt-1">
+            {stats?.lotes_vendidos ?? 0} vendidos / {stats?.lotes_disponiveis ?? 0} disponíveis
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl border border-slate-200 p-6">
+          <div className="text-sm text-slate-500 font-medium">Contratos Ativos</div>
           <div className="text-3xl font-bold text-rose-600 mt-2">
-            {pipeline.prospeccao + pipeline.reserva + pipeline.contrato + pipeline.escritura}
+            {statsLoading ? '—' : stats?.contratos_ativos ?? 0}
           </div>
-          <div className="text-xs text-slate-400 mt-1">negocios em andamento</div>
+          <div className="text-xs text-slate-400 mt-1">em andamento</div>
         </div>
 
-        <div className="rounded-xl bg-white border border-slate-200 p-6">
-          <div className="text-sm text-slate-500 font-medium">Alertas DIMOB</div>
-          <div className="text-3xl font-bold text-amber-600 mt-2">{dimobAlerts.length}</div>
-          <div className="text-xs text-slate-400 mt-1">pendencias identificadas</div>
-        </div>
-      </div>
-
-      {/* Sales Pipeline */}
-      <div className="rounded-xl bg-white border border-slate-200 p-6">
-        <h2 className="text-base font-semibold text-slate-800 mb-4">Pipeline de Vendas</h2>
-        <div className="grid grid-cols-4 gap-4">
-          <div className="text-center p-4 rounded-lg bg-slate-50">
-            <div className="text-2xl font-bold text-slate-700">{pipeline.prospeccao}</div>
-            <div className="text-xs text-slate-500 mt-1">Prospeccao</div>
+        <div className="bg-white rounded-xl border border-slate-200 p-6">
+          <div className="text-sm text-slate-500 font-medium">Inadimplência</div>
+          <div className="text-3xl font-bold text-amber-600 mt-2">
+            {statsLoading ? '—' : formatPercent(stats?.inadimplencia_pct ?? 0)}
           </div>
-          <div className="text-center p-4 rounded-lg bg-blue-50">
-            <div className="text-2xl font-bold text-blue-700">{pipeline.reserva}</div>
-            <div className="text-xs text-blue-600 mt-1">Reserva</div>
-          </div>
-          <div className="text-center p-4 rounded-lg bg-amber-50">
-            <div className="text-2xl font-bold text-amber-700">{pipeline.contrato}</div>
-            <div className="text-xs text-amber-600 mt-1">Contrato</div>
-          </div>
-          <div className="text-center p-4 rounded-lg bg-green-50">
-            <div className="text-2xl font-bold text-green-700">{pipeline.escritura}</div>
-            <div className="text-xs text-green-600 mt-1">Escritura</div>
-          </div>
+          <div className="text-xs text-slate-400 mt-1">dos contratos</div>
         </div>
       </div>
 
+      {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Loteamentos */}
-        <div className="rounded-xl bg-white border border-slate-200 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-base font-semibold text-slate-800">Loteamentos</h2>
-            <Link href="/loteamentos" className="text-sm text-rose-600 hover:text-rose-700 font-medium">
-              Ver todos
-            </Link>
-          </div>
-          {loteamentos.length > 0 ? (
-            <div className="space-y-4">
-              {loteamentos.map((lot) => (
-                <Link key={lot.id} href={`/loteamentos/${lot.id}`} className="block">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="text-sm font-medium text-slate-800">{lot.nome}</div>
-                      <div className="text-xs text-slate-500">{lot.vendidos}/{lot.lotes} lotes vendidos</div>
-                    </div>
-                    <div className="text-sm font-semibold text-slate-700">Score {lot.score}</div>
-                  </div>
-                  <div className="mt-2 w-full bg-slate-100 rounded-full h-2">
-                    <div className="bg-rose-500 h-2 rounded-full" style={{ width: `${(lot.vendidos / lot.lotes) * 100}%` }} />
-                  </div>
-                </Link>
-              ))}
-            </div>
+        {/* Pie Chart — Status dos Lotes */}
+        <div className="bg-white rounded-xl border border-slate-200 p-6">
+          <h2 className="text-base font-semibold text-slate-800 mb-4">Status dos Lotes</h2>
+          {pieData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={250}>
+              <PieChart>
+                <Pie
+                  data={pieData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={90}
+                  paddingAngle={3}
+                  dataKey="value"
+                  label={({ name, value }) => `${name}: ${value}`}
+                >
+                  {pieData.map((_, i) => (
+                    <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
           ) : (
-            <p className="text-sm text-slate-500">Nenhum loteamento cadastrado.</p>
+            <div className="flex items-center justify-center h-[250px] text-sm text-slate-400">
+              Sem dados de lotes
+            </div>
           )}
         </div>
 
-        {/* Alertas DIMOB */}
-        <div className="rounded-xl bg-white border border-slate-200 p-6">
-          <h2 className="text-base font-semibold text-slate-800 mb-4">Alertas DIMOB</h2>
-          {dimobAlerts.length > 0 ? (
-            <div className="space-y-3">
-              {dimobAlerts.map((alert) => (
-                <div key={alert.id} className="flex items-start gap-3">
-                  <SeverityDot severity={alert.severity} />
-                  <p className="text-sm text-slate-600">{alert.message}</p>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-slate-500">Nenhum alerta DIMOB.</p>
-          )}
-          <Link href="/dimob" className="inline-block mt-4 text-sm text-rose-600 hover:text-rose-700 font-medium">
-            Gerenciar DIMOB
+        {/* Score History */}
+        <div className="bg-white rounded-xl border border-slate-200 p-6">
+          <h2 className="text-base font-semibold text-slate-800 mb-4">Score Compliance Histórico</h2>
+          <ResponsiveContainer width="100%" height={250}>
+            <LineChart data={(() => {
+              const scoreHistoryChart = (historyData?.history ?? []).map((h: any) => ({
+                mes: new Date(h.date).toLocaleDateString('pt-BR', { month: 'short' }),
+                score: h.score,
+              }));
+              return scoreHistoryChart.length > 0 ? scoreHistoryChart : [{ mes: 'Atual', score: scoreValue }];
+            })()}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+              <XAxis dataKey="mes" tick={{ fontSize: 12 }} />
+              <YAxis domain={[0, 100]} tick={{ fontSize: 12 }} />
+              <Tooltip />
+              <Line type="monotone" dataKey="score" stroke="#f43f5e" strokeWidth={2} dot={{ fill: '#f43f5e' }} />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      {/* Loteamentos list */}
+      <div className="bg-white rounded-xl border border-slate-200 p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-base font-semibold text-slate-800">Loteamentos</h2>
+          <Link href="/loteamentos" className="text-sm text-rose-600 hover:text-rose-700 font-medium">
+            Ver todos
           </Link>
         </div>
+        {loteamentos.length > 0 ? (
+          <div className="space-y-3">
+            {loteamentos.slice(0, 5).map((lot: any) => (
+              <Link key={lot.id} href={`/loteamentos/${lot.id}`} className="block hover:bg-slate-50 rounded-lg p-3 -mx-3 transition-colors">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-sm font-medium text-slate-800">{lot.nome}</div>
+                    <div className="text-xs text-slate-500">{lot.cidade}, {lot.estado}</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-sm font-semibold text-slate-700">{lot.total_lotes} lotes</div>
+                    <div className="text-xs text-slate-400">{lot.status}</div>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-slate-500">Nenhum loteamento cadastrado.</p>
+        )}
       </div>
     </div>
   );
