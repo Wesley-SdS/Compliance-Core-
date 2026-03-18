@@ -84,10 +84,38 @@ export class LaboratorioController {
     return this.laboratorioService.getChecklist(id);
   }
 
+  @Get(':id/stats')
+  @ApiOperation({ summary: 'KPIs do dashboard do laboratorio' })
+  getStats(@Param('id') id: string) {
+    return this.laboratorioService.getStats(id);
+  }
+
+  @Get(':id/configuracoes')
+  @ApiOperation({ summary: 'Obter configuracoes do laboratorio' })
+  getConfiguracoes(@Param('id') id: string) {
+    return this.laboratorioService.getConfiguracoes(id);
+  }
+
+  @Put(':id/configuracoes')
+  @ApiOperation({ summary: 'Atualizar configuracoes do laboratorio' })
+  updateConfiguracoes(
+    @Param('id') id: string,
+    @Body() dto: { nome?: string; cnpj?: string; crbm?: string; slaHoras?: number; logoUrl?: string },
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.laboratorioService.updateConfiguracoes(id, dto, user.id);
+  }
+
   @Get(':id/dossier')
   @ApiOperation({ summary: 'Gerar dossie completo do laboratorio' })
   getDossier(@Param('id') id: string) {
     return this.laboratorioService.getDossier(id);
+  }
+
+  @Post('alertas/:alertId/acknowledge')
+  @ApiOperation({ summary: 'Reconhecer alerta' })
+  acknowledgeAlert(@Param('alertId') alertId: string, @CurrentUser() user: AuthUser) {
+    return this.laboratorioService.acknowledgeAlert(alertId, user.id);
   }
 
   @Get(':id/timeline')

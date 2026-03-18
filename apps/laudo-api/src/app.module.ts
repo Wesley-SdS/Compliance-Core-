@@ -7,6 +7,8 @@ import { ComplianceLogger } from '@compliancecore/sdk/shared/logger';
 import { LaboratorioModule } from './modules/laboratorio/laboratorio.module';
 import { LaudoModule } from './modules/laudo/laudo.module';
 import { EquipamentoModule } from './modules/equipamento/equipamento.module';
+import { TemplateModule } from './modules/template/template.module';
+import { PortalModule } from './modules/portal/portal.module';
 
 @Module({
   imports: [
@@ -18,6 +20,8 @@ import { EquipamentoModule } from './modules/equipamento/equipamento.module';
     LaboratorioModule,
     LaudoModule,
     EquipamentoModule,
+    TemplateModule,
+    PortalModule,
   ],
   providers: [
     {

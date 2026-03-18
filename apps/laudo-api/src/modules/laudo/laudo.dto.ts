@@ -83,4 +83,17 @@ export class UpdateLaudoDto {
   @IsOptional()
   @IsString()
   assinadoPor?: string;
+
+  @ApiPropertyOptional({ description: 'CRBio do responsavel' })
+  @IsOptional()
+  @IsString()
+  crbioResponsavel?: string;
+
+  @ApiPropertyOptional({ description: 'Resultados em JSONB' })
+  @IsOptional()
+  resultados?: any;
+
+  @ApiPropertyOptional({ description: 'Revisao IA em JSONB' })
+  @IsOptional()
+  revisaoIa?: any;
 }

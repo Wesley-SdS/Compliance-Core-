@@ -1,61 +1,18 @@
+'use client';
+
 import Link from 'next/link';
-import { apiFetch } from '@/lib/api';
+import { ComplianceBadge } from '@compliancecore/ui';
+import { useLaboratorios } from '@/hooks/use-laboratorio';
 
-interface Lab {
-  id: string;
-  nome: string;
-  cidade: string;
-  tipo: string;
-  certificacao: string;
-  statusCert: string;
-  score: number;
-  level: string;
-}
-
-async function getLabs(): Promise<Lab[]> {
-  try {
-    return await apiFetch<Lab[]>('/laboratorios');
-  } catch {
-    return [];
-  }
-}
-
-function ComplianceBadge({ level }: { level: string }) {
-  const styles: Record<string, string> = {
-    EXCELENTE: 'bg-green-100 text-green-700',
-    BOM: 'bg-blue-100 text-blue-700',
-    ATENCAO: 'bg-amber-100 text-amber-700',
-    CRITICO: 'bg-red-100 text-red-700',
-  };
-  return (
-    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${styles[level] ?? 'bg-slate-100 text-slate-700'}`}>
-      {level}
-    </span>
-  );
-}
-
-function CertBadge({ status }: { status: string }) {
-  const styles: Record<string, string> = {
-    ativo: 'bg-green-100 text-green-700',
-    vencendo: 'bg-amber-100 text-amber-700',
-    expirado: 'bg-red-100 text-red-700',
-  };
-  return (
-    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${styles[status] ?? 'bg-slate-100 text-slate-700'}`}>
-      {status}
-    </span>
-  );
-}
-
-export default async function LaboratoriosPage() {
-  const labs = await getLabs();
+export default function LaboratoriosPage() {
+  const { data: labs, isLoading } = useLaboratorios();
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-slate-800">Laboratorios</h2>
-          <p className="text-sm text-slate-500 mt-1">{labs.length} laboratorios cadastrados</p>
+          <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-100">Laboratorios</h2>
+          <p className="text-sm text-slate-500 mt-1">{labs?.length ?? 0} laboratorios cadastrados</p>
         </div>
         <button
           type="button"
@@ -65,44 +22,50 @@ export default async function LaboratoriosPage() {
         </button>
       </div>
 
-      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-slate-200 bg-slate-50">
-              <th className="text-left text-xs font-medium text-slate-500 uppercase tracking-wider px-6 py-3">Laboratorio</th>
-              <th className="text-left text-xs font-medium text-slate-500 uppercase tracking-wider px-6 py-3">Tipo</th>
-              <th className="text-left text-xs font-medium text-slate-500 uppercase tracking-wider px-6 py-3">Certificacao</th>
-              <th className="text-left text-xs font-medium text-slate-500 uppercase tracking-wider px-6 py-3">Status Cert.</th>
-              <th className="text-left text-xs font-medium text-slate-500 uppercase tracking-wider px-6 py-3">Score</th>
-              <th className="text-left text-xs font-medium text-slate-500 uppercase tracking-wider px-6 py-3">Compliance</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {labs.length > 0 ? (
-              labs.map((lab) => (
-                <tr key={lab.id} className="hover:bg-slate-50 transition-colors">
-                  <td className="px-6 py-4">
-                    <Link href={`/laboratorios/${lab.id}`} className="text-sm font-medium text-slate-800 hover:text-violet-600">
-                      {lab.nome}
-                    </Link>
-                    <div className="text-xs text-slate-400 mt-0.5">{lab.cidade}</div>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-slate-600">{lab.tipo}</td>
-                  <td className="px-6 py-4 text-sm text-slate-600">{lab.certificacao}</td>
-                  <td className="px-6 py-4"><CertBadge status={lab.statusCert} /></td>
-                  <td className="px-6 py-4 text-sm font-semibold text-slate-700">{lab.score}</td>
-                  <td className="px-6 py-4"><ComplianceBadge level={lab.level} /></td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={6} className="px-6 py-8 text-center text-sm text-slate-500">
-                  Nenhum laboratorio encontrado. Verifique a conexao com a API.
-                </td>
+      <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+        {isLoading ? (
+          <div className="animate-pulse p-6 space-y-4">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="h-12 bg-slate-200 dark:bg-slate-700 rounded" />
+            ))}
+          </div>
+        ) : (
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900">
+                <th className="text-left text-xs font-medium text-slate-500 uppercase tracking-wider px-6 py-3">Laboratorio</th>
+                <th className="text-left text-xs font-medium text-slate-500 uppercase tracking-wider px-6 py-3">Tipo</th>
+                <th className="text-left text-xs font-medium text-slate-500 uppercase tracking-wider px-6 py-3">Responsavel</th>
+                <th className="text-left text-xs font-medium text-slate-500 uppercase tracking-wider px-6 py-3">Compliance</th>
               </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
+              {(labs ?? []).length > 0 ? (
+                (labs ?? []).map((lab) => (
+                  <tr key={lab.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                    <td className="px-6 py-4">
+                      <Link href={`/laboratorios/${lab.id}`} className="text-sm font-medium text-slate-800 dark:text-slate-200 hover:text-violet-600">
+                        {lab.nome}
+                      </Link>
+                      <div className="text-xs text-slate-400 mt-0.5">{lab.cnpj}</div>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-300">{lab.tipo_laboratorio}</td>
+                    <td className="px-6 py-4 text-sm text-slate-500">{lab.responsavel_tecnico}</td>
+                    <td className="px-6 py-4">
+                      <ComplianceBadge status={lab.level === 'EXCELENTE' || lab.level === 'BOM' ? 'CONFORME' : lab.level === 'ATENCAO' ? 'PARCIAL' : 'NAO_CONFORME'} size="sm" />
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={4} className="px-6 py-8 text-center text-sm text-slate-500">
+                    Nenhum laboratorio encontrado.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );

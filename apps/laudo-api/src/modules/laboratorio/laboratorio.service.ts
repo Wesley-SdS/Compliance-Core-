@@ -177,4 +177,81 @@ export class LaboratorioService {
       aggregateId: id, aggregateType: 'laboratorio', page, limit,
     });
   }
+
+  async getStats(id: string) {
+    await this.findById(id);
+
+    const [laudosHoje, pendentes, revisados, liberadosHoje, tempoMedio, volumePorDia, distribuicao, eqVencidos] = await Promise.all([
+      this.db.queryOne<{count:string}>(`SELECT COUNT(*) as count FROM laudos WHERE laboratorio_id=$1 AND created_at::date=CURRENT_DATE`, [id]),
+      this.db.queryOne<{count:string}>(`SELECT COUNT(*) as count FROM laudos WHERE laboratorio_id=$1 AND status IN ('RASCUNHO','EM_REVISAO')`, [id]),
+      this.db.queryOne<{count:string}>(`SELECT COUNT(*) as count FROM laudos WHERE laboratorio_id=$1 AND status='REVISADO'`, [id]),
+      this.db.queryOne<{count:string}>(`SELECT COUNT(*) as count FROM laudos WHERE laboratorio_id=$1 AND status='LIBERADO' AND created_at::date=CURRENT_DATE`, [id]),
+      this.db.queryOne<{horas:string}>(`SELECT AVG(EXTRACT(EPOCH FROM (liberado_at-created_at))/3600) as horas FROM laudos WHERE laboratorio_id=$1 AND liberado_at IS NOT NULL AND created_at>NOW()-INTERVAL '30 days'`, [id]),
+      this.db.query(`SELECT created_at::date as data,COUNT(*) as quantidade FROM laudos WHERE laboratorio_id=$1 AND created_at>NOW()-INTERVAL '30 days' GROUP BY created_at::date ORDER BY data`, [id]),
+      this.db.query(`SELECT tipo_exame as tipo,COUNT(*) as quantidade FROM laudos WHERE laboratorio_id=$1 AND created_at>NOW()-INTERVAL '30 days' GROUP BY tipo_exame ORDER BY quantidade DESC`, [id]),
+      this.db.queryOne<{count:string}>(`SELECT COUNT(*) as count FROM equipamentos WHERE laboratorio_id=$1 AND proxima_calibracao<NOW()`, [id]),
+    ]);
+
+    return {
+      laudosHoje: parseInt(laudosHoje?.count ?? '0', 10),
+      laudosPendentes: parseInt(pendentes?.count ?? '0', 10),
+      laudosRevisados: parseInt(revisados?.count ?? '0', 10),
+      laudosLiberados: parseInt(liberadosHoje?.count ?? '0', 10),
+      tempoMedioLiberacao: parseFloat(tempoMedio?.horas ?? '0') || 0,
+      valoresCriticosHoje: 0,
+      equipamentosVencidos: parseInt(eqVencidos?.count ?? '0', 10),
+      volumePorDia: volumePorDia || [],
+      distribuicaoPorExame: distribuicao || [],
+    };
+  }
+
+  async acknowledgeAlert(alertId: string, actorId: string) {
+    const alert = await this.db.queryOne(`SELECT * FROM alerts WHERE id=$1`, [alertId]);
+    if (!alert) throw new NotFoundException(`Alert ${alertId} not found`);
+    await this.db.query(`UPDATE alerts SET status='ACKNOWLEDGED',updated_at=NOW() WHERE id=$1`, [alertId]);
+    await this.eventStore.append(alert.entity_id, 'laboratorio', 'ALERT_ACKNOWLEDGED', { alertId }, {
+      actorId, actorRole: 'admin', ip: '0.0.0.0', correlationId: ulid(),
+    });
+    return { success: true };
+  }
+
+  async getConfiguracoes(id: string) {
+    const lab = await this.findById(id);
+    return {
+      nome: lab.nome,
+      cnpj: lab.cnpj,
+      crbm: lab.crbm,
+      responsavelTecnico: lab.responsavel_tecnico,
+      tipoLaboratorio: lab.tipo_laboratorio,
+      endereco: lab.endereco,
+      slaHoras: lab.sla_horas ?? 24,
+      logoUrl: lab.logo_url ?? null,
+    };
+  }
+
+  async updateConfiguracoes(id: string, dto: { nome?: string; cnpj?: string; crbm?: string; slaHoras?: number; logoUrl?: string }, actorId: string) {
+    await this.findById(id);
+    const fields: string[] = [];
+    const values: any[] = [];
+    let idx = 1;
+
+    if (dto.nome !== undefined) { fields.push(`nome = $${idx}`); values.push(dto.nome); idx++; }
+    if (dto.cnpj !== undefined) { fields.push(`cnpj = $${idx}`); values.push(dto.cnpj); idx++; }
+    if (dto.crbm !== undefined) { fields.push(`crbm = $${idx}`); values.push(dto.crbm); idx++; }
+    if (dto.slaHoras !== undefined) { fields.push(`sla_horas = $${idx}`); values.push(dto.slaHoras); idx++; }
+    if (dto.logoUrl !== undefined) { fields.push(`logo_url = $${idx}`); values.push(dto.logoUrl); idx++; }
+
+    if (fields.length === 0) return this.getConfiguracoes(id);
+
+    fields.push(`updated_at = $${idx}`); values.push(new Date()); idx++;
+    values.push(id);
+
+    await this.db.query(`UPDATE laboratorios SET ${fields.join(', ')} WHERE id = $${idx}`, values);
+
+    await this.eventStore.append(id, 'laboratorio', 'CONFIG_UPDATED', { changes: dto }, {
+      actorId, actorRole: 'admin', ip: '0.0.0.0', correlationId: ulid(),
+    });
+
+    return this.getConfiguracoes(id);
+  }
 }

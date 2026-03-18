@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(for app:*)",
+      "Bash(do echo:*)",
+      "Read(//c/Users/wesle/Documents/GitHub/Compliance-Core-/apps/**)",
+      "Bash(pnpm --filter @compliancecore/tributo-api exec vitest run src/modules/sped/sped.service.spec.ts -t \"delete\")",
+      "Bash(pnpm --filter @compliancecore/tributo-api test)",
+      "Bash(pnpm --filter @compliancecore/tributo-api exec vitest run src/modules/sped/sped.service.spec.ts -t \"remove arquivo\")",
+      "Bash(pnpm --filter @compliancecore/tributo-api exec vitest run src/modules/sped/sped.service.spec.ts)",
+      "Bash(pnpm --filter @compliancecore/tributo-api exec vitest run --reporter verbose)",
+      "Bash(npx turbo:*)",
+      "Bash(for dir:*)",
+      "Read(//c/Users/wesle/Documents/GitHub/Compliance-Core-/apps/$dir/**)",
+      "Bash(node -e \"console.log\\(require\\(''next/package.json''\\).version\\)\")",
+      "Bash(npx --no-install next --version)",
+      "Bash(node -e \"console.log\\(require.resolve\\(''next''\\)\\)\")",
+      "Bash(where next:*)"
+    ]
+  }
+}
