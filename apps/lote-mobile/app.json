@@ -1,0 +1,25 @@
+{
+  "expo": {
+    "name": "LotePro Comprador",
+    "slug": "lote-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "lotepro",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "backgroundColor": "#FFF1F2"
+    },
+    "ios": {
+      "bundleIdentifier": "com.compliancecore.lotepro",
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#FFF1F2"
+      },
+      "package": "com.compliancecore.lotepro"
+    },
+    "plugins": ["expo-router", "expo-secure-store"]
+  }
+}
