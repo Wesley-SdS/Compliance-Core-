@@ -1,0 +1,35 @@
+{
+  "expo": {
+    "name": "FrotaLeve",
+    "slug": "frota-leve",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "frotaleve",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "plugins": [
+      "expo-router",
+      ["expo-camera", { "cameraPermission": "Permitir acesso a camera para fotografar cupons de combustivel" }],
+      ["expo-location", { "locationAlwaysAndWhenInUsePermission": "Permitir acesso a localizacao para rastreamento de viagens" }],
+      ["expo-notifications", { "icon": "./assets/notification-icon.png" }]
+    ],
+    "ios": {
+      "bundleIdentifier": "com.compliancecore.frota",
+      "supportsTablet": false,
+      "infoPlist": {
+        "NSCameraUsageDescription": "Fotografar cupons de combustivel",
+        "NSLocationWhenInUseUsageDescription": "Rastrear viagens em andamento",
+        "NSLocationAlwaysUsageDescription": "Rastrear viagens em background"
+      }
+    },
+    "android": {
+      "package": "com.compliancecore.frota",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0EA5E9"
+      },
+      "permissions": ["CAMERA", "ACCESS_FINE_LOCATION", "ACCESS_BACKGROUND_LOCATION"]
+    }
+  }
+}
