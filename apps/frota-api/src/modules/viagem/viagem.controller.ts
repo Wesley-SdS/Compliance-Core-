@@ -1,11 +1,11 @@
 import {
-  Controller, Get, Post, Put, Delete,
+  Controller, Get, Post, Put, Patch, Delete,
   Param, Body, Query, UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { BetterAuthGuard, CurrentUser, AuthUser } from '@compliancecore/sdk';
 import { ViagemService } from './viagem.service';
-import { CreateViagemDto, UpdateViagemDto } from './viagem.dto';
+import { CreateViagemDto, UpdateViagemDto, FinalizarViagemDto, RegistrarParadaDto } from './viagem.dto';
 
 @ApiTags('viagens')
 @ApiBearerAuth()
@@ -84,5 +84,25 @@ export class ViagemController {
   @ApiOperation({ summary: 'Excluir viagem' })
   delete(@Param('id') id: string, @CurrentUser() user: AuthUser) {
     return this.viagemService.delete(id, user.id);
+  }
+
+  @Patch(':id/finalizar')
+  @ApiOperation({ summary: 'Finalizar viagem com km final' })
+  finalizar(
+    @Param('id') id: string,
+    @Body() dto: FinalizarViagemDto,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.viagemService.finalizar(id, dto, user.id);
+  }
+
+  @Post(':id/parada')
+  @ApiOperation({ summary: 'Registrar parada durante viagem' })
+  registrarParada(
+    @Param('id') id: string,
+    @Body() dto: RegistrarParadaDto,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.viagemService.registrarParada(id, dto, user.id);
   }
 }

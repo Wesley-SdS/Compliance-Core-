@@ -174,4 +174,91 @@ export class VeiculoService {
       aggregateId: id, aggregateType: 'veiculo', page, limit,
     });
   }
+
+  async getScoreHistory(id: string, page = 1, limit = 20) {
+    await this.findById(id);
+    const offset = (page - 1) * limit;
+    const [rows, countResult] = await Promise.all([
+      this.db.query(
+        `SELECT * FROM event_store WHERE aggregate_id = $1 AND aggregate_type = 'veiculo' AND event_type = 'SCORE_CALCULATED'
+         ORDER BY created_at DESC LIMIT $2 OFFSET $3`,
+        [id, limit, offset],
+      ),
+      this.db.queryOne<{ count: string }>(
+        `SELECT COUNT(*) as count FROM event_store WHERE aggregate_id = $1 AND aggregate_type = 'veiculo' AND event_type = 'SCORE_CALCULATED'`,
+        [id],
+      ),
+    ]);
+    const total = parseInt(countResult?.count ?? '0', 10);
+    return { data: rows, total, page, limit, hasMore: offset + rows.length < total };
+  }
+
+  async getAbastecimentos(id: string, page = 1, limit = 20) {
+    await this.findById(id);
+    const offset = (page - 1) * limit;
+    const [rows, countResult] = await Promise.all([
+      this.db.query(
+        `SELECT * FROM abastecimentos WHERE veiculo_id = $1 ORDER BY data DESC LIMIT $2 OFFSET $3`,
+        [id, limit, offset],
+      ),
+      this.db.queryOne<{ count: string }>(
+        `SELECT COUNT(*) as count FROM abastecimentos WHERE veiculo_id = $1`, [id],
+      ),
+    ]);
+    const total = parseInt(countResult?.count ?? '0', 10);
+    return { data: rows, total, page, limit, hasMore: offset + rows.length < total };
+  }
+
+  async getConsumo(id: string) {
+    await this.findById(id);
+    const result = await this.db.queryOne<{ total_litros: string; total_km: string; count: string }>(
+      `SELECT COALESCE(SUM(litros), 0) as total_litros,
+              COALESCE(MAX(km) - MIN(km), 0) as total_km,
+              COUNT(*) as count
+       FROM abastecimentos WHERE veiculo_id = $1`,
+      [id],
+    );
+    const totalLitros = parseFloat(result?.total_litros ?? '0');
+    const totalKm = parseFloat(result?.total_km ?? '0');
+    const consumoMedio = totalLitros > 0 ? totalKm / totalLitros : 0;
+    return {
+      veiculoId: id,
+      totalLitros,
+      totalKm,
+      consumoMedio,
+      totalAbastecimentos: parseInt(result?.count ?? '0', 10),
+    };
+  }
+
+  async getManutencoes(id: string, page = 1, limit = 20) {
+    await this.findById(id);
+    const offset = (page - 1) * limit;
+    const [rows, countResult] = await Promise.all([
+      this.db.query(
+        `SELECT * FROM manutencoes WHERE veiculo_id = $1 ORDER BY data DESC LIMIT $2 OFFSET $3`,
+        [id, limit, offset],
+      ),
+      this.db.queryOne<{ count: string }>(
+        `SELECT COUNT(*) as count FROM manutencoes WHERE veiculo_id = $1`, [id],
+      ),
+    ]);
+    const total = parseInt(countResult?.count ?? '0', 10);
+    return { data: rows, total, page, limit, hasMore: offset + rows.length < total };
+  }
+
+  async getViagens(id: string, page = 1, limit = 20) {
+    await this.findById(id);
+    const offset = (page - 1) * limit;
+    const [rows, countResult] = await Promise.all([
+      this.db.query(
+        `SELECT * FROM viagens WHERE veiculo_id = $1 ORDER BY data_partida DESC LIMIT $2 OFFSET $3`,
+        [id, limit, offset],
+      ),
+      this.db.queryOne<{ count: string }>(
+        `SELECT COUNT(*) as count FROM viagens WHERE veiculo_id = $1`, [id],
+      ),
+    ]);
+    const total = parseInt(countResult?.count ?? '0', 10);
+    return { data: rows, total, page, limit, hasMore: offset + rows.length < total };
+  }
 }

@@ -4,8 +4,8 @@ import { EventStoreService } from '@compliancecore/sdk/event-store/event-store.s
 import { DatabaseService } from '@compliancecore/sdk/shared/database';
 import { ComplianceLogger } from '@compliancecore/sdk/shared/logger';
 
-import { CreateViagemDto, UpdateViagemDto } from './viagem.dto';
-export { CreateViagemDto, UpdateViagemDto };
+import { CreateViagemDto, UpdateViagemDto, FinalizarViagemDto, RegistrarParadaDto } from './viagem.dto';
+export { CreateViagemDto, UpdateViagemDto, FinalizarViagemDto, RegistrarParadaDto };
 
 @Injectable()
 export class ViagemService {
@@ -156,5 +156,44 @@ export class ViagemService {
     return this.db.query(
       `SELECT * FROM viagens WHERE status IN ('PLANEJADA', 'EM_ANDAMENTO') AND ciot_numero IS NULL ORDER BY data_partida ASC`,
     );
+  }
+
+  async finalizar(id: string, dto: FinalizarViagemDto, actorId: string) {
+    const viagem = await this.findById(id);
+
+    await this.db.query(
+      `UPDATE viagens SET status = 'CONCLUIDA', km_percorridos = $1, data_chegada_real = NOW(), updated_at = NOW() WHERE id = $2`,
+      [dto.kmFim, id],
+    );
+
+    await this.db.query(
+      `UPDATE motoristas SET em_viagem = false, updated_at = NOW() WHERE id = $1`,
+      [viagem.motorista_id],
+    );
+
+    await this.eventStore.append(id, 'viagem', 'VIAGEM_FINALIZADA', { kmFim: dto.kmFim }, {
+      actorId, actorRole: 'gestor_frota', ip: '0.0.0.0', correlationId: ulid(),
+    });
+
+    this.logger.log(`Viagem finalizada: ${id}`, { viagemId: id, kmFim: dto.kmFim });
+    return this.findById(id);
+  }
+
+  async registrarParada(id: string, dto: RegistrarParadaDto, actorId: string) {
+    await this.findById(id);
+    const paradaId = ulid();
+
+    await this.db.query(
+      `INSERT INTO paradas (id, viagem_id, tipo, timestamp, created_at)
+       VALUES ($1, $2, $3, NOW(), NOW())`,
+      [paradaId, id, dto.tipo],
+    );
+
+    await this.eventStore.append(id, 'viagem', 'PARADA_REGISTRADA', { paradaId, tipo: dto.tipo }, {
+      actorId, actorRole: 'gestor_frota', ip: '0.0.0.0', correlationId: ulid(),
+    });
+
+    this.logger.log(`Parada registrada na viagem: ${id}`, { viagemId: id, paradaId, tipo: dto.tipo });
+    return { id: paradaId, viagemId: id, tipo: dto.tipo };
   }
 }

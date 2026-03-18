@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsOptional, IsNumber, IsDateString, Min } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsNumber, IsDateString, IsEnum, Min } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateViagemDto {
@@ -79,4 +79,24 @@ export class UpdateViagemDto {
   @IsOptional()
   @IsString()
   observacoes?: string;
+}
+
+export class FinalizarViagemDto {
+  @ApiProperty({ description: 'Km final da viagem' })
+  @IsNumber()
+  @Min(0)
+  kmFim: number;
+}
+
+export enum TipoParada {
+  DESCANSO = 'DESCANSO',
+  REFEICAO = 'REFEICAO',
+  CARGA = 'CARGA',
+  DESCARGA = 'DESCARGA',
+}
+
+export class RegistrarParadaDto {
+  @ApiProperty({ enum: TipoParada, description: 'Tipo da parada' })
+  @IsEnum(TipoParada)
+  tipo: TipoParada;
 }

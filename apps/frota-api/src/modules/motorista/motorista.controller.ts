@@ -74,4 +74,34 @@ export class MotoristaController {
   ) {
     return this.motoristaService.getDescansos(id, page, limit);
   }
+
+  @Get(':id/horas')
+  @ApiOperation({ summary: 'Calcular horas de conducao do motorista' })
+  getHorasConducao(@Param('id') id: string) {
+    return this.motoristaService.getHorasConducao(id);
+  }
+
+  @Get(':id/viagens')
+  @ApiOperation({ summary: 'Listar viagens do motorista' })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  getViagens(
+    @Param('id') id: string,
+    @Query('page') page = 1,
+    @Query('limit') limit = 20,
+  ) {
+    return this.motoristaService.getViagens(id, page, limit);
+  }
+
+  @Get(':id/documentos')
+  @ApiOperation({ summary: 'Listar documentos do motorista' })
+  getDocumentos(@Param('id') id: string) {
+    return this.motoristaService.getDocumentos(id);
+  }
+
+  @Get(':id/alertas')
+  @ApiOperation({ summary: 'Listar alertas do motorista' })
+  getAlertas(@Param('id') id: string) {
+    return this.motoristaService.getAlertas(id);
+  }
 }

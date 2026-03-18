@@ -1,5 +1,5 @@
 import {
-  Controller, Get, Post, Put, Delete,
+  Controller, Get, Post, Put, Patch, Delete,
   Param, Body, Query, UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
@@ -44,6 +44,16 @@ export class VeiculoController {
     return this.veiculoService.update(id, dto, user.id);
   }
 
+  @Patch(':id')
+  @ApiOperation({ summary: 'Atualizar veiculo (parcial)' })
+  patch(
+    @Param('id') id: string,
+    @Body() dto: UpdateVeiculoDto,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.veiculoService.update(id, dto, user.id);
+  }
+
   @Delete(':id')
   @ApiOperation({ summary: 'Excluir veiculo' })
   delete(@Param('id') id: string, @CurrentUser() user: AuthUser) {
@@ -54,6 +64,60 @@ export class VeiculoController {
   @ApiOperation({ summary: 'Calcular score de compliance do veiculo' })
   calculateScore(@Param('id') id: string) {
     return this.veiculoService.calculateScore(id);
+  }
+
+  @Get(':id/score/history')
+  @ApiOperation({ summary: 'Historico de score do veiculo' })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  getScoreHistory(
+    @Param('id') id: string,
+    @Query('page') page = 1,
+    @Query('limit') limit = 20,
+  ) {
+    return this.veiculoService.getScoreHistory(id, page, limit);
+  }
+
+  @Get(':id/abastecimentos')
+  @ApiOperation({ summary: 'Listar abastecimentos do veiculo' })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  getAbastecimentos(
+    @Param('id') id: string,
+    @Query('page') page = 1,
+    @Query('limit') limit = 20,
+  ) {
+    return this.veiculoService.getAbastecimentos(id, page, limit);
+  }
+
+  @Get(':id/consumo')
+  @ApiOperation({ summary: 'Calcular consumo medio do veiculo' })
+  getConsumo(@Param('id') id: string) {
+    return this.veiculoService.getConsumo(id);
+  }
+
+  @Get(':id/manutencoes')
+  @ApiOperation({ summary: 'Listar manutencoes do veiculo' })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  getManutencoes(
+    @Param('id') id: string,
+    @Query('page') page = 1,
+    @Query('limit') limit = 20,
+  ) {
+    return this.veiculoService.getManutencoes(id, page, limit);
+  }
+
+  @Get(':id/viagens')
+  @ApiOperation({ summary: 'Listar viagens do veiculo' })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  getViagens(
+    @Param('id') id: string,
+    @Query('page') page = 1,
+    @Query('limit') limit = 20,
+  ) {
+    return this.veiculoService.getViagens(id, page, limit);
   }
 
   @Get(':id/documents')
