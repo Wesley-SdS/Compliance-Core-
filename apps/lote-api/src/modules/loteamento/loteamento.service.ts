@@ -173,6 +173,25 @@ export class LoteamentoService {
     };
   }
 
+  async getCompradores(loteamentoId: string) {
+    await this.findById(loteamentoId);
+    return this.db.query(
+      `SELECT * FROM compradores WHERE loteamento_id = $1 ORDER BY nome`,
+      [loteamentoId],
+    );
+  }
+
+  async acknowledgeAlert(alertId: string, actorId: string) {
+    await this.db.query(
+      `UPDATE alerts SET status = 'ACKNOWLEDGED', updated_at = NOW() WHERE id = $1`,
+      [alertId],
+    );
+
+    await this.eventStore.append(alertId, 'alert', 'ALERT_ACKNOWLEDGED', {}, {
+      actorId, actorRole: 'admin', ip: '0.0.0.0', correlationId: ulid(),
+    });
+  }
+
   async getTimeline(id: string, page = 1, limit = 50) {
     await this.findById(id);
     return this.eventStore.getAuditTrail({

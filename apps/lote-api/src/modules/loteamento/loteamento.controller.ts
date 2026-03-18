@@ -84,10 +84,26 @@ export class LoteamentoController {
     return this.loteamentoService.getChecklist(id);
   }
 
+  @Get(':id/compradores')
+  @ApiOperation({ summary: 'Listar compradores do loteamento' })
+  getCompradores(@Param('id') id: string) {
+    return this.loteamentoService.getCompradores(id);
+  }
+
   @Get(':id/dossier')
   @ApiOperation({ summary: 'Gerar dossie completo do loteamento' })
   getDossier(@Param('id') id: string) {
     return this.loteamentoService.getDossier(id);
+  }
+
+  @Post('alertas/:alertId/acknowledge')
+  @ApiOperation({ summary: 'Reconhecer alerta' })
+  async acknowledgeAlert(
+    @Param('alertId') alertId: string,
+    @CurrentUser() user: AuthUser,
+  ) {
+    await this.loteamentoService.acknowledgeAlert(alertId, user.id);
+    return { success: true };
   }
 
   @Get(':id/timeline')
