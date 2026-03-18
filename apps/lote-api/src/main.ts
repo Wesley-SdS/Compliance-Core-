@@ -29,6 +29,14 @@ async function bootstrap() {
     .addTag('loteamentos', 'Gerenciamento de loteamentos')
     .addTag('lotes', 'Gerenciamento de lotes individuais')
     .addTag('compradores', 'Gerenciamento de compradores')
+    .addTag('contratos', 'Gestao de contratos e parcelas')
+    .addTag('infraestrutura', 'Acompanhamento de obras de infraestrutura')
+    .addTag('aprovacoes', 'Aprovacoes legais e regulatorias')
+    .addTag('financeiro', 'Dashboard financeiro')
+    .addTag('cobranca', 'Regua de cobranca e inadimplencia')
+    .addTag('portal', 'Portal do comprador (acesso publico)')
+    .addTag('legislacao', 'Feed de legislacao aplicavel')
+    .addTag('stats', 'Estatisticas globais e score')
     .build();
 
   const document = SwaggerModule.createDocument(app, swaggerConfig);
