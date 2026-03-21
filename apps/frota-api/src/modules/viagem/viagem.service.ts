@@ -1,8 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { ulid } from 'ulid';
-import { EventStoreService } from '@compliancecore/sdk/event-store/event-store.service';
-import { DatabaseService } from '@compliancecore/sdk/shared/database';
-import { ComplianceLogger } from '@compliancecore/sdk/shared/logger';
+import { EventStoreService, DatabaseService, ComplianceLogger } from '@compliancecore/sdk';
 
 import { CreateViagemDto, UpdateViagemDto } from './viagem.dto';
 export { CreateViagemDto, UpdateViagemDto };
