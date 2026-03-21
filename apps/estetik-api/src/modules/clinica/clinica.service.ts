@@ -118,7 +118,7 @@ export class ClinicaService {
       [id, JSON.stringify(clinica), now, now],
     );
 
-    await this.eventStore.append(id, 'Clinica', 'CLINICA_CREATED', clinica, {
+    await this.eventStore.append(id, 'Clinica', 'CLINICA_CREATED', { ...clinica }, {
       actorId,
       actorRole: 'admin',
       ip: '0.0.0.0',

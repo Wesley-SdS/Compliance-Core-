@@ -19,6 +19,8 @@
     "bullmq": "^5.0.0",
     "@compliancecore/sdk": "workspace:*",
     "@compliancecore/shared": "workspace:*",
+    "class-validator": "^0.14.0",
+    "class-transformer": "^0.5.1",
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.0",
     "axios": "^1.7.0",
