@@ -125,7 +125,7 @@ function EtapaChecklistSection({ obraId, etapa }: { obraId: string; etapa: any }
 
   return (
     <ChecklistForm
-      items={items}
+      checklist={etapa as any}
       onSubmit={async (responses: any[]) => {
         try {
           await submitChecklist.mutateAsync({ responses });
@@ -134,7 +134,6 @@ function EtapaChecklistSection({ obraId, etapa }: { obraId: string; etapa: any }
           toast({ title: 'Erro ao enviar checklist', variant: 'destructive' });
         }
       }}
-      isSubmitting={submitChecklist.isPending}
     />
   );
 }
