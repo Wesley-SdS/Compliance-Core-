@@ -1,7 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { ulid } from 'ulid';
-import { DatabaseService } from '@compliancecore/sdk/shared/database';
-import { ComplianceLogger } from '@compliancecore/sdk/shared/logger';
+import { DatabaseService, ComplianceLogger } from '@compliancecore/sdk';
 import { CreateTemplateDto, UpdateTemplateDto } from './template.dto';
 
 @Injectable()

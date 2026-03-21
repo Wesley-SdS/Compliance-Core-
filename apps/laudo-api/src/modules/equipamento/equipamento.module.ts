@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { EventStoreModule } from '@compliancecore/sdk/event-store/event-store.module';
+import { EventStoreModule } from '@compliancecore/sdk';
 import { EquipamentoController } from './equipamento.controller';
 import { EquipamentoService } from './equipamento.service';
 
