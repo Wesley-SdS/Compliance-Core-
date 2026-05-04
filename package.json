@@ -4,7 +4,7 @@
   "workspaces": ["packages/*", "apps/*"],
   "scripts": {
     "build": "turbo build",
-    "dev": "turbo dev",
+    "dev": "turbo dev --concurrency 20",
     "lint": "turbo lint",
     "test": "turbo test",
     "format": "prettier --write \"**/*.{ts,tsx,js,json,md}\""

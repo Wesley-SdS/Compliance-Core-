@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { api } from '@/lib/api';
-import { ScoreGauge } from '@compliancecore/ui/ScoreGauge';
+import { ScoreGauge } from '@compliancecore/ui';
 import type {
   ComplianceScore,
   ComplianceLevel,

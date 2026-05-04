@@ -1,17 +1,15 @@
-import { Processor, WorkerHost } from '@nestjs/bull';
+import { Processor, Process } from '@nestjs/bull';
 import { Logger } from '@nestjs/common';
-import { Job } from 'bullmq';
 import { VektusAdapterService } from '@compliancecore/sdk';
 
 @Processor('obra-scraper')
-export class ScraperProcessor extends WorkerHost {
+export class ScraperProcessor {
   private readonly logger = new Logger('ScraperProcessor');
 
-  constructor(private readonly vektus: VektusAdapterService) {
-    super();
-  }
+  constructor(private readonly vektus: VektusAdapterService) {}
 
-  async process(job: Job): Promise<void> {
+  @Process()
+  async process(job: { name: string; data: any }): Promise<void> {
     this.logger.log(`Processing scraper job: ${job.name}`);
 
     switch (job.name) {

@@ -4,9 +4,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { useClinicas, useClinicaScore, useClinicaDocuments, useCalculateScore } from '@/hooks/use-clinicas';
-import { ScoreGauge } from '@compliancecore/ui/ScoreGauge';
-import { DossierPreview } from '@compliancecore/ui/DossierPreview';
-import { ComplianceBadge } from '@compliancecore/ui/ComplianceBadge';
+import { ScoreGauge, DossierPreview, ComplianceBadge } from '@compliancecore/ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -48,7 +46,8 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
-import type { CriterionResult, BadgeStatus } from '@compliancecore/shared';
+import type { CriterionResult } from '@compliancecore/shared';
+import type { BadgeStatus } from '@compliancecore/ui';
 
 const CRITERION_WEIGHTS: Record<string, number> = {
   ALVARA_SANITARIO: 20,
@@ -349,7 +348,7 @@ export default function ScorePage() {
                 Detalhamento por Criterio
               </h3>
               {breakdown.length > 0 ? (
-                breakdown.map((criterion) => (
+                breakdown.map((criterion: any) => (
                   <CriterionCard key={criterion.criterionId} criterion={criterion} />
                 ))
               ) : (

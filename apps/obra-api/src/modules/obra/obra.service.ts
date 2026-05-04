@@ -219,7 +219,10 @@ export class ObraService {
 
   async getScoreHistory(id: string, months: number = 6) {
     await this.findById(id);
-    return this.scoreEngine.getHistory(id, months);
+    const end = new Date();
+    const start = new Date();
+    start.setMonth(start.getMonth() - months);
+    return this.scoreEngine.getHistory(id, { start, end });
   }
 
   async uploadNota(id: string, dto: UploadNotaFiscalDto, actorId: string) {

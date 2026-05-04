@@ -1,10 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { ulid } from 'ulid';
-import { EventStoreService } from '@compliancecore/sdk/event-store/event-store.service';
-import { ScoreEngineService } from '@compliancecore/sdk/score-engine/score-engine.service';
-import { VektusAdapterService } from '@compliancecore/sdk/vektus/vektus-adapter.service';
-import { DatabaseService } from '@compliancecore/sdk/shared/database';
-import { ComplianceLogger } from '@compliancecore/sdk/shared/logger';
+import { EventStoreService, ScoreEngineService, VektusAdapterService, DatabaseService, ComplianceLogger } from '@compliancecore/sdk';
 import { LOTE_CRITERIA, LOTE_DOC_CATEGORIES } from '../../config/lote.config';
 
 import { CreateLoteamentoDto, UpdateLoteamentoDto } from './loteamento.dto';

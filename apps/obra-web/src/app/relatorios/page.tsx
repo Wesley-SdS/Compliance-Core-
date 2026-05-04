@@ -150,8 +150,15 @@ function ObraReport({ obraId }: { obraId: string }) {
         </div>
 
         <DossierPreview
-          score={score}
-          documents={docs}
+          entityName="Obra"
+          period={{ start: new Date().toISOString(), end: new Date().toISOString() }}
+          score={score?.overall ?? 0}
+          level={score?.level ?? 'CRITICO'}
+          documentCount={docs.length}
+          eventCount={0}
+          checklistCount={0}
+          onGenerate={handleGenerate}
+          generating={generateDossier.isPending}
         />
       </div>
     </div>

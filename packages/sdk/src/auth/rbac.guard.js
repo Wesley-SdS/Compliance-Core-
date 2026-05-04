@@ -30,7 +30,7 @@ let RBACGuard = class RBACGuard {
         const { user } = context.switchToHttp().getRequest();
         if (!user)
             throw new common_1.ForbiddenException('No user context');
-        const hasRole = requiredRoles.some(role => user.role === role || user.role === 'admin');
+        const hasRole = requiredRoles.some((role) => user.role === role || user.role === 'admin');
         if (!hasRole)
             throw new common_1.ForbiddenException(`Required roles: ${requiredRoles.join(', ')}`);
         return true;

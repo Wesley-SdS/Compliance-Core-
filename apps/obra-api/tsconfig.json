@@ -12,9 +12,11 @@
     "declarationMap": false,
     "sourceMap": true,
     "strict": true,
+    "strictPropertyInitialization": false,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "paths": {}
   },
   "include": ["src"],
   "exclude": ["node_modules", "dist"]

@@ -20,7 +20,7 @@ const config = ComplianceCoreConfigService.fromEnv();
     ConfigModule.forRoot({ isGlobal: true, envFilePath: ['.env.local', '.env'] }),
     ComplianceCoreModule.register(config),
     BullModule.forRoot({
-      connection: {
+      redis: {
         host: config.redis?.host || 'localhost',
         port: config.redis?.port || 6379,
         password: config.redis?.password || undefined,

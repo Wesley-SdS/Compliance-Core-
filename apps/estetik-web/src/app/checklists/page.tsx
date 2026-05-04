@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useClinicas, useClinicaChecklist } from '@/hooks/use-clinicas';
-import { ChecklistForm } from '@compliancecore/ui/ChecklistForm';
+import { ChecklistForm } from '@compliancecore/ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';

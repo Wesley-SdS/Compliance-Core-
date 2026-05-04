@@ -1,9 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { EventStoreModule } from '@compliancecore/sdk/event-store/event-store.module';
-import { ComplianceCoreConfigService } from '@compliancecore/sdk/shared/config';
-import { DatabaseService } from '@compliancecore/sdk/shared/database';
-import { ComplianceLogger } from '@compliancecore/sdk/shared/logger';
+import { EventStoreModule, ComplianceCoreConfigService, DatabaseService, ComplianceLogger } from '@compliancecore/sdk';
 import { LaboratorioModule } from './modules/laboratorio/laboratorio.module';
 import { LaudoModule } from './modules/laudo/laudo.module';
 import { EquipamentoModule } from './modules/equipamento/equipamento.module';

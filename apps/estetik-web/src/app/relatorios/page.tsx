@@ -69,7 +69,10 @@ export default function RelatoriosPage() {
           generating={generateMutation.isPending}
           onGenerate={async () => {
             try {
-              await generateMutation.mutateAsync();
+              await generateMutation.mutateAsync({
+                startDate: sixMonthsAgo.toISOString().split('T')[0],
+                endDate: now.toISOString().split('T')[0],
+              });
               toast({ title: 'Dossie gerado', description: `Dossie de ${selectedClinica.nome} gerado com sucesso.` });
             } catch {
               toast({ title: 'Erro', description: 'Falha ao gerar dossie.', variant: 'destructive' });

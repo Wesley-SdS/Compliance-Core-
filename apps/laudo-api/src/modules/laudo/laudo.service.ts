@@ -1,10 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { ulid } from 'ulid';
-import { EventStoreService } from '@compliancecore/sdk/event-store/event-store.service';
-import { VektusAdapterService } from '@compliancecore/sdk/vektus/vektus-adapter.service';
-import { DatabaseService } from '@compliancecore/sdk/shared/database';
-import { ComplianceLogger } from '@compliancecore/sdk/shared/logger';
-import { AuthUser } from '@compliancecore/sdk';
+import { EventStoreService, VektusAdapterService, DatabaseService, ComplianceLogger, AuthUser } from '@compliancecore/sdk';
 
 import { CreateLaudoDto, UpdateLaudoDto } from './laudo.dto';
 export { CreateLaudoDto, UpdateLaudoDto };
@@ -169,7 +165,7 @@ export class LaudoService {
 
     // Vektus-based suggestions
     if (searchResults.length > 0) {
-      const topRef = searchResults[0];
+      const topRef: any = searchResults[0];
       alertas.push({ id: ulid(), tipo: 'sugestao', mensagem: `Baseado em guidelines: ${typeof topRef === 'string' ? topRef.substring(0, 200) : (topRef.content || JSON.stringify(topRef)).substring(0, 200)}` });
     }
 

@@ -125,7 +125,7 @@ describe('Integration: Obra → NF → OCR → Materiais → Transfer', () => {
 
     criarObra = new CriarObraUseCase(mockDb as any, mockEventStore as any, mockLogger as any);
     registrarNF = new RegistrarNotaFiscalUseCase(mockDb as any, mockEventStore as any, mockVektus as any, mockLogger as any);
-    processarOCR = new ProcessarOCRCallbackUseCase(mockDb as any, mockEventStore as any);
+    processarOCR = new ProcessarOCRCallbackUseCase(mockDb as any, mockEventStore as any, mockLogger as any);
     transferirMaterial = new TransferirMaterialUseCase(mockDb as any, mockEventStore as any, mockLogger as any);
   });
 

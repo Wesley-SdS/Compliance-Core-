@@ -148,7 +148,6 @@ export default function DocumentosPage() {
             <DocumentUploader
               categories={[...DOCUMENT_CATEGORIES]}
               onUpload={handleUpload}
-              isUploading={uploadDocument.isPending}
             />
           </div>
 

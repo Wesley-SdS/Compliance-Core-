@@ -100,11 +100,7 @@ export default function AlertasPage() {
 
       {urgentAlerts.length > 0 && (
         <AlertBanner
-          alerts={urgentAlerts.map((a: any) => ({
-            id: a.id,
-            message: a.message,
-            severity: a.severity,
-          }))}
+          alerts={urgentAlerts as any}
         />
       )}
 

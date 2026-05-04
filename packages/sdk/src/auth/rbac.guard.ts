@@ -18,7 +18,7 @@ export class RBACGuard implements CanActivate {
     const { user } = context.switchToHttp().getRequest();
     if (!user) throw new ForbiddenException('No user context');
 
-    const hasRole = requiredRoles.some(role => user.role === role || user.role === 'admin');
+    const hasRole = requiredRoles.some((role: string) => user.role === role || user.role === 'admin');
     if (!hasRole) throw new ForbiddenException(`Required roles: ${requiredRoles.join(', ')}`);
     return true;
   }

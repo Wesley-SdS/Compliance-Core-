@@ -6,13 +6,14 @@ const mockDb = {
   queryOne: vi.fn(),
 };
 const mockEventStore = { append: vi.fn() };
+const mockLogger = { log: vi.fn(), warn: vi.fn(), error: vi.fn(), setContext: vi.fn() };
 
 describe('ProcessarOCRCallbackUseCase', () => {
   let useCase: ProcessarOCRCallbackUseCase;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    useCase = new ProcessarOCRCallbackUseCase(mockDb as any, mockEventStore as any);
+    useCase = new ProcessarOCRCallbackUseCase(mockDb as any, mockEventStore as any, mockLogger as any);
   });
 
   describe('when status is failed', () => {

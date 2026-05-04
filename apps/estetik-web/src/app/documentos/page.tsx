@@ -91,7 +91,8 @@ export default function DocumentosPage() {
           <DocumentUploader
             categories={['alvara', 'licenca_sanitaria', 'registro_anvisa', 'pop', 'tcle', 'contrato', 'laudo_tecnico', 'certificado_treinamento', 'pgrss', 'outro']}
             onUpload={async (file, metadata) => {
-              await uploadMutation.mutateAsync({
+              await (uploadMutation.mutateAsync as any)({
+                file,
                 fileName: file.name,
                 fileKey: `estetik/${clinicaId}/${Date.now()}-${file.name}`,
                 fileSize: file.size,

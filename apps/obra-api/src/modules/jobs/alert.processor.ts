@@ -1,20 +1,18 @@
-import { Processor, WorkerHost } from '@nestjs/bull';
+import { Processor, Process } from '@nestjs/bull';
 import { Logger } from '@nestjs/common';
-import { Job } from 'bullmq';
 import { AlertEngineService, DatabaseService } from '@compliancecore/sdk';
 
 @Processor('obra-alerts')
-export class AlertProcessor extends WorkerHost {
+export class AlertProcessor {
   private readonly logger = new Logger('AlertProcessor');
 
   constructor(
     private readonly alertEngine: AlertEngineService,
     private readonly db: DatabaseService,
-  ) {
-    super();
-  }
+  ) {}
 
-  async process(job: Job): Promise<void> {
+  @Process()
+  async process(job: { name: string; data: any }): Promise<void> {
     this.logger.log(`Processing alert job: ${job.name}`);
 
     if (job.name === 'check-due') {
