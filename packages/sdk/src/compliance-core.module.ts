@@ -12,11 +12,16 @@ import { DocumentManagerService } from './documents/document-manager.service.js'
 import { ChecklistEngineService } from './checklists/checklist-engine.service.js';
 import { AuthModule } from './auth/auth.module.js';
 import { Pool } from 'pg';
+import { MockComplianceCoreModule } from './mock/mock.module.js';
 
 @Global()
 @Module({})
 export class ComplianceCoreModule {
   static register(config: ComplianceCoreConfig): DynamicModule {
+    if (process.env.MOCK_MODE === 'true') {
+      return MockComplianceCoreModule.register(config);
+    }
+
     const configService = new ComplianceCoreConfigService(config);
     const databaseService = new DatabaseService({
       host: config.database.host,

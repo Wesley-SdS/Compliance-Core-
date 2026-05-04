@@ -1,6 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { DatabaseService } from '@compliancecore/sdk/shared/database';
-import { ComplianceLogger } from '@compliancecore/sdk/shared/logger';
+import { DatabaseService, ComplianceLogger } from '@compliancecore/sdk';
 
 @Injectable()
 export class PortalService {

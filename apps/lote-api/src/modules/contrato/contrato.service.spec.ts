@@ -7,6 +7,7 @@ vi.mock('ulid', () => ({
 }));
 
 import { ContratoService } from './contrato.service';
+import { SistemaAmortizacao } from './contrato.dto';
 
 const mockDb = {
   query: vi.fn(),
@@ -49,7 +50,7 @@ describe('ContratoService', () => {
       valorEntrada: 20000,
       numeroParcelas: 120,
       taxaJurosMensal: 1,
-      sistema: 'PRICE' as const,
+      sistema: SistemaAmortizacao.PRICE,
     };
 
     it('inserts contrato and generates parcelas with correct PRICE math', async () => {
@@ -139,7 +140,7 @@ describe('ContratoService', () => {
       valorEntrada: 20000,
       numeroParcelas: 120,
       taxaJurosMensal: 1,
-      sistema: 'SAC' as const,
+      sistema: SistemaAmortizacao.SAC,
     };
 
     it('generates parcelas with constant amortizacao and decreasing prestacao', async () => {

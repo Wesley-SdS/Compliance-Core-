@@ -48,3 +48,6 @@ export type { BetterAuthInstance, BetterAuthOptions, SendEmailFn, SendEmailParam
 
 // Main Module
 export { ComplianceCoreModule } from './compliance-core.module.js';
+
+// Mock (for testing or dev without infra)
+export { MockComplianceCoreModule } from './mock/index.js';

@@ -1,7 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { EventStoreService } from '@compliancecore/sdk/event-store/event-store.service';
-import { DatabaseService } from '@compliancecore/sdk/shared/database';
-import { ComplianceLogger } from '@compliancecore/sdk/shared/logger';
+import { EventStoreService, DatabaseService, ComplianceLogger } from '@compliancecore/sdk';
 
 @Injectable()
 export class FrotaService {

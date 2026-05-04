@@ -3,7 +3,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { BetterAuthGuard, CurrentUser, AuthUser } from '@compliancecore/sdk';
-import { DatabaseService } from '@compliancecore/sdk/shared/database';
+import { DatabaseService } from '@compliancecore/sdk';
 
 @ApiTags('comprador-portal')
 @ApiBearerAuth()

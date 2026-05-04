@@ -1,17 +1,23 @@
 {
   "name": "compliancecore",
   "private": true,
-  "workspaces": ["packages/*", "apps/*"],
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
   "scripts": {
     "build": "turbo build",
     "dev": "turbo dev --concurrency 20",
     "lint": "turbo lint",
     "test": "turbo test",
-    "format": "prettier --write \"**/*.{ts,tsx,js,json,md}\""
+    "format": "prettier --write \"**/*.{ts,tsx,js,json,md}\"",
+    "db:migrate": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"Get-ChildItem 'infra/migrations/*.sql' | Sort-Object Name | ForEach-Object { Write-Host \\\"Applying $($_.Name)\\\"; Get-Content $_.FullName | docker exec -i compliancecore-postgres psql -U compliancecore -d compliancecore -v ON_ERROR_STOP=1 }\"",
+    "db:reset": "docker compose down -v && docker compose up -d"
   },
   "devDependencies": {
-    "turbo": "^2.4.0",
+    "oxlint": "^1.57.0",
     "prettier": "^3.5.0",
+    "turbo": "^2.4.0",
     "typescript": "^5.7.0"
   },
   "engines": {

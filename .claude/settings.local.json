@@ -15,7 +15,25 @@
       "Bash(node -e \"console.log\\(require\\(''next/package.json''\\).version\\)\")",
       "Bash(npx --no-install next --version)",
       "Bash(node -e \"console.log\\(require.resolve\\(''next''\\)\\)\")",
-      "Bash(where next:*)"
+      "Bash(where next:*)",
+      "Bash(APP_DIR=\"C:/Users/wesle/Documents/GitHub/Compliance-Core-/apps/frota-mobile/app\")",
+      "Bash(cp \"C:/tmp/frota_index.tsx\" \"$APP_DIR/index.tsx\")",
+      "Bash(cp \"C:/tmp/frota_abastecer.tsx\" \"$APP_DIR/abastecer.tsx\")",
+      "Bash(cp \"C:/tmp/frota_viagem.tsx\" \"$APP_DIR/viagem.tsx\")",
+      "Bash(cp \"C:/tmp/frota_checklist.tsx\" \"$APP_DIR/checklist.tsx\")",
+      "WebFetch(domain:www.better-auth.com)",
+      "Bash(cd:*)",
+      "Bash(for d:*)",
+      "Read(//c/Users/wesle/Documents/GitHub/Compliance-Core-/apps/frota-api/src/modules/$d/**)",
+      "Bash(git -C /c/Users/wesle/Documents/GitHub/Compliance-Core- diff HEAD -- packages/sdk/)",
+      "Bash(git -C /c/Users/wesle/Documents/GitHub/Compliance-Core- diff HEAD -- packages/ui/)",
+      "Bash(git -C /c/Users/wesle/Documents/GitHub/Compliance-Core- diff HEAD -- packages/shared/)",
+      "Bash(git -C /c/Users/wesle/Documents/GitHub/Compliance-Core- diff HEAD -- apps/estetik-web/ apps/estetik-api/)",
+      "Bash(git -C /c/Users/wesle/Documents/GitHub/Compliance-Core- diff HEAD -- apps/obra-web/ apps/obra-api/)",
+      "Bash(git -C /c/Users/wesle/Documents/GitHub/Compliance-Core- diff HEAD -- apps/tributo-web/ apps/tributo-api/)",
+      "Bash(git -C /c/Users/wesle/Documents/GitHub/Compliance-Core- diff HEAD -- apps/laudo-web/ apps/laudo-api/)",
+      "Bash(git -C /c/Users/wesle/Documents/GitHub/Compliance-Core- diff HEAD -- apps/frota-web/ apps/frota-api/ apps/frota-mobile/)",
+      "Bash(git -C /c/Users/wesle/Documents/GitHub/Compliance-Core- diff HEAD -- packages/ apps/estetik-web apps/estetik-api apps/obra-web apps/obra-api apps/tributo-web apps/tributo-api apps/laudo-web apps/laudo-api apps/frota-web apps/frota-api apps/frota-mobile)"
     ]
   }
 }
